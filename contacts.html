@@ -3,80 +3,71 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Контакты — SecondStyle</title>
+  <title>Контакты — AVEREST</title>
   <link rel="stylesheet" href="style.css"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 </head>
 <body>
 <header class="header">
   <div class="container header__inner">
-    <a href="index.html" class="logo">Second<span>Style</span></a>
+    <a href="index.html" class="logo">AVER<span>EST</span></a>
     <nav class="nav">
       <a href="index.html" class="nav__link">Главная</a>
       <a href="index.html#catalog" class="nav__link">Каталог</a>
       <a href="contacts.html" class="nav__link active">Контакты</a>
     </nav>
-    <a href="https://t.me/brendyshmendy_bot" target="_blank" class="btn btn--sm">Написать в Telegram</a>
+    <a href="https://t.me/brendyshmendy_bot" target="_blank" class="btn btn--sm">Telegram</a>
   </div>
 </header>
 
 <section class="contacts-section">
   <div class="container">
     <h2 class="section-title">Контакты</h2>
-    <p style="text-align:center;opacity:0.6;margin-top:-24px;margin-bottom:48px;">
-      Мы всегда на связи — выбирайте удобный способ
+    <p style="text-align:center;opacity:0.4;margin-top:-32px;margin-bottom:56px;font-size:0.85rem;letter-spacing:0.1em;text-transform:uppercase;">
+      Выберите удобный способ связи
     </p>
-
     <div class="contacts-grid">
       <div class="contact-card">
-        <div class="contact-card__icon">💬</div>
+        <div class="contact-card__icon">✦</div>
         <h3>Telegram</h3>
         <a href="https://t.me/brendyshmendy_bot" target="_blank">@brendyshmendy_bot</a>
-        <p>Самый быстрый способ связи. Отвечаем в течение 15 минут.</p>
+        <p>Самый быстрый способ. Ответ в течение 15 минут.</p>
       </div>
       <div class="contact-card">
-        <div class="contact-card__icon">📞</div>
+        <div class="contact-card__icon">◎</div>
         <h3>Телефон</h3>
         <a href="tel:+7XXXXXXXXXX">+7 (XXX) XXX-XX-XX</a>
         <p>Пн–Пт: 10:00–20:00, Сб–Вс: 11:00–18:00</p>
       </div>
       <div class="contact-card">
-        <div class="contact-card__icon">📧</div>
+        <div class="contact-card__icon">◈</div>
         <h3>Email</h3>
         <a href="mailto:your@email.ru">your@email.ru</a>
         <p>Ответим в течение нескольких часов.</p>
       </div>
       <div class="contact-card">
-        <div class="contact-card__icon">🛒</div>
+        <div class="contact-card__icon">◇</div>
         <h3>Авито</h3>
         <a href="https://www.avito.ru/" target="_blank">Наш профиль</a>
-        <p>Все товары также размещены на Авито.</p>
+        <p>Все товары также на Авито.</p>
       </div>
     </div>
 
-    <div style="max-width:600px;margin:0 auto;">
-      <h2 class="section-title" style="margin-bottom:32px;">Написать нам</h2>
+    <div style="max-width:580px;margin:0 auto;">
+      <h2 class="section-title" style="margin-bottom:40px;">Написать нам</h2>
       <form id="contactForm" onsubmit="sendContact(event)"
-            style="background:#1a1a1a;border:1px solid rgba(255,255,255,0.07);border-radius:24px;padding:40px;">
-        <div class="form-group">
-          <label>Ваше имя *</label>
-          <input type="text" name="name" placeholder="Иван Иванов" required/>
-        </div>
-        <div class="form-group">
-          <label>Телефон или Telegram</label>
-          <input type="text" name="contact" placeholder="+7 999 000-00-00 или @username"/>
-        </div>
-        <div class="form-group">
-          <label>Сообщение *</label>
-          <textarea name="message" placeholder="Ваш вопрос или пожелание..." style="height:120px;" required></textarea>
-        </div>
-        <button type="submit" class="btn btn--full">Отправить сообщение</button>
+            style="background:#0d0d0d;border:1px solid rgba(255,255,255,0.06);padding:48px;">
+        <div class="form-group"><label>Ваше имя *</label><input type="text" name="name" placeholder="Иван Иванов" required/></div>
+        <div class="form-group"><label>Телефон или Telegram</label><input type="text" name="contact" placeholder="+7 999 000-00-00 или @username"/></div>
+        <div class="form-group"><label>Сообщение *</label><textarea name="message" placeholder="Ваш вопрос или пожелание..." style="height:120px;" required></textarea></div>
+        <button type="submit" class="btn btn--full">Отправить</button>
       </form>
-      <div id="contactSuccess" style="display:none;text-align:center;padding:40px;">
-        <div style="font-size:3.5rem;margin-bottom:16px;">✅</div>
-        <h3 style="font-size:1.4rem;font-weight:800;margin-bottom:8px;">Сообщение отправлено!</h3>
-        <p style="opacity:0.7;">Мы свяжемся с вами в ближайшее время.</p>
+      <div id="contactSuccess" style="display:none;text-align:center;padding:48px;">
+        <div style="font-size:3rem;margin-bottom:20px;color:#c8a96e;">✦</div>
+        <h3 style="font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:600;margin-bottom:10px;">Сообщение отправлено</h3>
+        <p style="opacity:0.5;font-size:0.9rem;">Свяжемся с вами в ближайшее время.</p>
       </div>
     </div>
   </div>
@@ -85,7 +76,7 @@
 <footer class="footer">
   <div class="container footer__inner">
     <div class="footer__brand">
-      <a href="index.html" class="logo">Second<span>Style</span></a>
+      <a href="index.html" class="logo">AVER<span>EST</span></a>
       <p>Брендовый секонд-хенд с доставкой по России</p>
     </div>
     <div class="footer__links">
@@ -101,45 +92,32 @@
     </div>
   </div>
   <div class="footer__bottom">
-    <p>© 2025 SecondStyle. Все права защищены.</p>
+    <div class="container"><p>© 2025 AVEREST. Все права защищены.</p></div>
   </div>
 </footer>
 
 <script>
 const TELEGRAM_BOT_TOKEN = '8806045240:AAGBqoiGIZ3LoYX2ggAYpKHKxBRJ0ANcseI';
 const TELEGRAM_CHAT_ID   = '195600304';
-
 async function sendContact(e) {
   e.preventDefault();
   const form = e.target;
   const data = Object.fromEntries(new FormData(form).entries());
-  const message =
-    '📩 *Сообщение с сайта (контакты)*
+  const message = '📩 *Сообщение с сайта AVEREST*
 
-' +
-    '👤 ' + data.name + '
+👤 ' + data.name + '
 ' +
     (data.contact ? '📞 ' + data.contact + '
-' : '') +
-    '
+' : '') + '
 💬 ' + data.message;
   try {
-    const res = await fetch(
-      'https://api.telegram.org/bot' + TELEGRAM_BOT_TOKEN + '/sendMessage', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message, parse_mode: 'Markdown' })
-      }
-    );
-    if (res.ok) {
-      form.style.display = 'none';
-      document.getElementById('contactSuccess').style.display = '';
-    } else {
-      alert('Ошибка отправки. Напишите нам напрямую в Telegram.');
-    }
-  } catch (err) {
-    alert('Ошибка соединения.');
-  }
+    const res = await fetch('https://api.telegram.org/bot' + TELEGRAM_BOT_TOKEN + '/sendMessage', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message, parse_mode: 'Markdown' })
+    });
+    if (res.ok) { form.style.display = 'none'; document.getElementById('contactSuccess').style.display = ''; }
+    else { alert('Ошибка. Напишите напрямую в Telegram.'); }
+  } catch(err) { alert('Ошибка соединения.'); }
 }
 </script>
 </body>
