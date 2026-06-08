@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SecondStyle — брендовые вещи по доступным ценам</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<header class="header">
+  <div class="container header__inner">
+    <a href="index.html" class="logo">Second<span>Style</span></a>
+    <nav class="nav">
+      <a href="index.html" class="nav__link active">Главная</a>
+      <a href="#catalog" class="nav__link">Каталог</a>
+      <a href="contacts.html" class="nav__link">Контакты</a>
+    </nav>
+    <a href="https://t.me/YOUR_TELEGRAM" target="_blank" class="btn btn--sm">Написать в Telegram</a>
+  </div>
+</header>
+<section class="hero">
+  <div class="container hero__inner">
+    <div class="hero__text">
+      <h1 class="hero__title">Брендовые вещи<br/><span>по честным ценам</span></h1>
+      <p class="hero__sub">Отборный секонд-хенд: выбираем лучшее — продаём с заботой. Доставка по всей России.</p>
+      <div class="hero__btns">
+        <a href="#catalog" class="btn">Смотреть каталог</a>
+        <a href="contacts.html" class="btn btn--outline">Связаться с нами</a>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="features">
+  <div class="container features__grid">
+    <div class="feature-card">
+      <div class="feature-card__icon">✅</div>
+      <h3>Честное состояние</h3>
+      <p>Подробно описываем каждый дефект — никаких сюрпризов при получении.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-card__icon">📦</div>
+      <h3>Доставка по России</h3>
+      <p>Отправляем Почтой России, СДЭК и Боксберри. Упакуем бережно.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-card__icon">💬</div>
+      <h3>Быстрый ответ</h3>
+      <p>Отвечаем в Telegram в течение 15 минут в рабочее время.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-card__icon">🏷️</div>
+      <h3>Лучшая цена</h3>
+      <p>Цены ниже рынка — покупаем напрямую из секонд-хенда.</p>
+    </div>
+  </div>
+</section>
+<section class="catalog" id="catalog">
+  <div class="container">
+    <h2 class="section-title">Каталог товаров</h2>
+    <div class="filters">
+      <button class="filter-btn active" data-filter="all">Все</button>
+      <button class="filter-btn" data-filter="jacket">Куртки</button>
+      <button class="filter-btn" data-filter="jeans">Джинсы</button>
+      <button class="filter-btn" data-filter="shoes">Обувь</button>
+      <button class="filter-btn" data-filter="dress">Платья</button>
+      <button class="filter-btn" data-filter="accessories">Аксессуары</button>
+    </div>
+    <div class="products" id="products">
+      <div class="product-card" data-category="jacket">
+        <div class="product-card__img-wrap">
+          <img src="images/item1.jpg" alt="Куртка" class="product-card__img" onerror="this.src='https://placehold.co/400x400/f0e6d3/8b6914?text=Фото'"/>
+          <span class="product-card__badge">Хорошее</span>
+        </div>
+        <div class="product-card__body">
+          <h3 class="product-card__title">Куртка демисезонная Zara</h3>
+          <p class="product-card__desc">Размер M, цвет хаки. Состояние хорошее, небольшая затяжка на рукаве.</p>
+          <div class="product-card__footer">
+            <span class="product-card__price">1 800 ₽</span>
+            <button class="btn btn--sm" onclick="openOrder('Куртка демисезонная Zara','1 800 ₽')">Заказать</button>
+          </div>
+        </div>
+      </div>
+      <div class="product-card" data-category="jeans">
+        <div class="product-card__img-wrap">
+          <img src="images/item2.jpg" alt="Джинсы" class="product-card__img" onerror="this.src='https://placehold.co/400x400/d3e6f0/145b8b?text=Фото'"/>
+          <span class="product-card__badge product-card__badge--new">Отличное</span>
+        </div>
+        <div class="product-card__body">
+          <h3 class="product-card__title">Джинсы Levis 501</h3>
+          <p class="product-card__desc">Размер 32/32, классический крой. Состояние отличное, почти не носились.</p>
+          <div class="product-card__footer">
+            <span class="product-card__price">2 500 ₽</span>
+            <button class="btn btn--sm" onclick="openOrder('Джинсы Levis 501','2 500 ₽')">Заказать</button>
+          </div>
+        </div>
+      </div>
+      <div class="product-card" data-category="shoes">
+        <div class="product-card__img-wrap">
+          <img src="images/item3.jpg" alt="Кроссовки" class="product-card__img" onerror="this.src='https://placehold.co/400x400/e6d3f0/6914a8?text=Фото'"/>
+          <span class="product-card__badge">Хорошее</span>
+        </div>
+        <div class="product-card__body">
+          <h3 class="product-card__title">Кроссовки Nike Air Max</h3>
+          <p class="product-card__desc">Размер 42, белые. Подошва чистая, есть небольшой износ по носку.</p>
+          <div class="product-card__footer">
+            <span class="product-card__price">3 200 ₽</span>
+            <button class="btn btn--sm" onclick="openOrder('Кроссовки Nike Air Max','3 200 ₽')">Заказать</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<div class="modal-overlay" id="modalOverlay" onclick="closeOrder()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <button class="modal__close" onclick="closeOrder()">&#x2715;</button>
+    <h2 class="modal__title">Оформить заказ</h2>
+    <p class="modal__item" id="modalItemName"></p>
+    <form id="orderForm" onsubmit="sendOrder(event)">
+      <div class="form-group">
+        <label>Ваше имя *</label>
+        <input type="text" name="name" placeholder="Иван Иванов" required/>
+      </div>
+      <div class="form-group">
+        <label>Телефон *</label>
+        <input type="tel" name="phone" placeholder="+7 999 000-00-00" required/>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" name="email" placeholder="ivan@mail.ru"/>
+      </div>
+      <div class="form-group">
+        <label>Способ доставки *</label>
+        <select name="delivery" required>
+          <option value="">Выберите...</option>
+          <option>Почта России</option>
+          <option>СДЭК</option>
+          <option>Боксберри</option>
+          <option>Самовывоз</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Адрес доставки</label>
+        <input type="text" name="address" placeholder="Город, улица, дом"/>
+      </div>
+      <div class="form-group">
+        <label>Комментарий</label>
+        <textarea name="comment" placeholder="Любые пожелания..."></textarea>
+      </div>
+      <button type="submit" class="btn btn--full">Отправить заказ</button>
+    </form>
+    <div class="modal__success" id="modalSuccess" style="display:none">
+      <div class="success-icon">🎉</div>
+      <h3>Заказ принят!</h3>
+      <p>Мы свяжемся с вами в ближайшее время в Telegram или по телефону.</p>
+    </div>
+  </div>
+</div>
+<footer class="footer">
+  <div class="container footer__inner">
+    <div class="footer__brand">
+      <a href="index.html" class="logo">Second<span>Style</span></a>
+      <p>Брендовый секонд-хенд с доставкой по России</p>
+    </div>
+    <div class="footer__links">
+      <a href="index.html">Главная</a>
+      <a href="#catalog">Каталог</a>
+      <a href="contacts.html">Контакты</a>
+    </div>
+    <div class="footer__contacts">
+      <a href="tel:+7XXXXXXXXXX">+7 (XXX) XXX-XX-XX</a>
+      <a href="mailto:your@email.ru">your@email.ru</a>
+      <a href="https://t.me/YOUR_TELEGRAM" target="_blank">Telegram</a>
+      <a href="https://www.avito.ru/YOUR_PROFILE" target="_blank">Авито</a>
+    </div>
+  </div>
+  <div class="footer__bottom">
+    <p>© 2025 SecondStyle. Все права защищены.</p>
+  </div>
+</footer>
+<script src="app.js"></script>
+</body>
+</html>
