@@ -1,11 +1,9 @@
 // =============================================
 // SecondStyle — app.js
-// Замените TELEGRAM_BOT_TOKEN и TELEGRAM_CHAT_ID
-// на свои значения!
 // =============================================
 
-const TELEGRAM_BOT_TOKEN = 'YOUR_BOT_TOKEN';
-const TELEGRAM_CHAT_ID   = 'YOUR_CHAT_ID';
+const TELEGRAM_BOT_TOKEN = '8806045240:AAGBqoiGIZ3LoYX2ggAYpKHKxBRJ0ANcseI';
+const TELEGRAM_CHAT_ID   = '195600304';
 
 // ---------- Текущий товар для заказа ----------
 let currentItem = { name: '', price: '' };
