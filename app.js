@@ -2,9 +2,6 @@
 // SecondStyle — app.js
 // =============================================
 
-const TELEGRAM_BOT_TOKEN = '8806045240:AAGBqoiGIZ3LoYX2ggAYpKHKxBRJ0ANcseI';
-const TELEGRAM_CHAT_ID   = '195600304';
-
 // ---------- Текущий товар для заказа ----------
 let currentItem = { name: '', price: '' };
 
@@ -37,43 +34,21 @@ async function sendOrder(e) {
   const form = e.target;
   const data = Object.fromEntries(new FormData(form).entries());
 
-  const message =
-    '🛍 *Новый заказ с сайта!*
-
-' +
-    '*Товар:* ' + currentItem.name + '
-' +
-    '*Цена:* ' + currentItem.price + '
-
-' +
-    '*Покупатель:*
-' +
-    '👤 ' + data.name + '
-' +
-    '📞 ' + data.phone + '
-' +
-    (data.email ? '📧 ' + data.email + '
-' : '') +
-    '
-*Доставка:* ' + data.delivery + '
-' +
-    (data.address ? '📍 ' + data.address + '
-' : '') +
-    (data.comment ? '
-💬 ' + data.comment : '');
-
   try {
-    const res = await fetch(
-      'https://api.telegram.org/bot' + TELEGRAM_BOT_TOKEN + '/sendMessage', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: TELEGRAM_CHAT_ID,
-          text: message,
-          parse_mode: 'Markdown'
-        })
-      }
-    );
+    const res = await fetch('/api/send-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        itemName: currentItem.name,
+        itemPrice: currentItem.price,
+        name: data.name,
+        phone: data.phone,
+        email: data.email,
+        delivery: data.delivery,
+        address: data.address,
+        comment: data.comment,
+      })
+    });
 
     if (res.ok) {
       form.style.display = 'none';

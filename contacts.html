@@ -97,23 +97,14 @@
 </footer>
 
 <script>
-const TELEGRAM_BOT_TOKEN = '8806045240:AAGBqoiGIZ3LoYX2ggAYpKHKxBRJ0ANcseI';
-const TELEGRAM_CHAT_ID   = '195600304';
 async function sendContact(e) {
   e.preventDefault();
   const form = e.target;
   const data = Object.fromEntries(new FormData(form).entries());
-  const message = '📩 *Сообщение с сайта AVEREST*
-
-👤 ' + data.name + '
-' +
-    (data.contact ? '📞 ' + data.contact + '
-' : '') + '
-💬 ' + data.message;
   try {
-    const res = await fetch('https://api.telegram.org/bot' + TELEGRAM_BOT_TOKEN + '/sendMessage', {
+    const res = await fetch('/api/send-contact', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message, parse_mode: 'Markdown' })
+      body: JSON.stringify({ name: data.name, contact: data.contact, message: data.message })
     });
     if (res.ok) { form.style.display = 'none'; document.getElementById('contactSuccess').style.display = ''; }
     else { alert('Ошибка. Напишите напрямую в Telegram.'); }
