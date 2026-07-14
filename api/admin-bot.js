@@ -272,6 +272,7 @@ export default async function handler(req, res) {
 
   try {
     let draft = await getDraft(chatId);
+    console.log(`[admin-bot] chat=${chatId} readStep=${draft?.step} incoming=${callback ? 'cb:' + callback.data : message?.text ? 'text:' + message.text : message?.photo ? 'photo' : '?'}`);
 
     if (callback) {
       if (!draft) { await answerCallbackQuery(callback.id, 'Черновик не найден'); res.status(200).json({ ok: true }); return; }

@@ -11,7 +11,13 @@ async function readJson(pathname) {
   } catch {
     return null;
   }
-  const res = await fetch(blob.url, { cache: 'no-store' });
+  // head() hits Vercel's storage API directly (strongly consistent), but the
+  // public blob.url is served through a CDN edge that can briefly return a
+  // cached response for the same URL right after an overwrite. Busting with
+  // the blob's own uploadedAt timestamp forces a fresh edge fetch.
+  const bust = encodeURIComponent(new Date(blob.uploadedAt).getTime());
+  const url = blob.url + (blob.url.includes('?') ? '&' : '?') + 'v=' + bust;
+  const res = await fetch(url, { cache: 'no-store' });
   if (!res.ok) return null;
   return res.json();
 }
