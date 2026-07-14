@@ -237,7 +237,7 @@ export default async function handler(req, res) {
   }
 
   const secret = process.env.ADMIN_BOT_SECRET;
-  if (secret && req.headers['x-telegram-bot-api-secret-token'] !== secret) {
+  if (!secret || req.headers['x-telegram-bot-api-secret-token'] !== secret) {
     res.status(401).json({ error: 'Unauthorized' });
     return;
   }

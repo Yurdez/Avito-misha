@@ -70,15 +70,23 @@ function formatPrice(n) {
 }
 
 function escapeHtml(s) {
-  const div = document.createElement('div');
-  div.textContent = String(s == null ? '' : s);
-  return div.innerHTML;
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function isHttpsUrl(s) {
+  try { return new URL(s).protocol === 'https:'; } catch { return false; }
 }
 
 function productCardHtml(p) {
   const badgeClass = p.condition === 'Отличное' ? 'product-card__badge product-card__badge--new' : 'product-card__badge';
-  const dots = p.photos.length > 1
-    ? '<div class="product-card__dots">' + p.photos.map(function(_, i) {
+  const safePhotos = (p.photos || []).filter(isHttpsUrl);
+  const dots = safePhotos.length > 1
+    ? '<div class="product-card__dots">' + safePhotos.map(function(_, i) {
         return '<button type="button" class="product-card__dot' + (i === 0 ? ' active' : '') + '" data-idx="' + i + '" aria-label="Фото ' + (i + 1) + '"></button>';
       }).join('') + '</div>'
     : '';
@@ -91,8 +99,8 @@ function productCardHtml(p) {
 
   const name = escapeHtml(p.name);
   const condition = escapeHtml(p.condition);
-  const photoUrl = escapeHtml(p.photos[0]);
-  const photosJson = escapeHtml(JSON.stringify(p.photos));
+  const photoUrl = escapeHtml(safePhotos[0] || 'https://placehold.co/400x500/111/c8a96e?text=AVEREST');
+  const photosJson = escapeHtml(JSON.stringify(safePhotos));
   const price = formatPrice(p.price);
 
   return (
