@@ -1,68 +1,46 @@
-// Общий доступ к данным каталога и черновиков в Vercel Blob.
+// Данные каталога и черновиков анкеты.
+// Redis — для JSON-данных (нужна мгновенная консистентность между сообщениями бота).
+// Vercel Blob — только для файлов фото (нужен CDN, консистентность не критична).
 
-import { put, head, del } from '@vercel/blob';
+import { put } from '@vercel/blob';
+import getRedis from './redis.js';
 
-const PRODUCTS_PATH = 'data/products.json';
-
-async function readJson(pathname) {
-  let blob;
-  try {
-    blob = await head(pathname);
-  } catch {
-    return null;
-  }
-  // head() hits Vercel's storage API directly (strongly consistent), but the
-  // public blob.url is served through a CDN edge that can briefly return a
-  // cached response for the same URL right after an overwrite. Busting with
-  // the blob's own uploadedAt timestamp forces a fresh edge fetch.
-  const bust = encodeURIComponent(new Date(blob.uploadedAt).getTime());
-  const url = blob.url + (blob.url.includes('?') ? '&' : '?') + 'v=' + bust;
-  const res = await fetch(url, { cache: 'no-store' });
-  if (!res.ok) return null;
-  return res.json();
-}
-
-async function writeJson(pathname, data) {
-  await put(pathname, JSON.stringify(data), {
-    access: 'public',
-    contentType: 'application/json',
-    addRandomSuffix: false,
-    allowOverwrite: true,
-    cacheControlMaxAge: 0,
-  });
-}
+const PRODUCTS_KEY = 'products';
+const DRAFT_TTL_SECONDS = 60 * 60; // черновик анкеты живёт час без активности
 
 export async function getProducts() {
-  const data = await readJson(PRODUCTS_PATH);
+  const redis = await getRedis();
+  const raw = await redis.get(PRODUCTS_KEY);
+  const data = raw ? JSON.parse(raw) : [];
   return Array.isArray(data) ? data : [];
 }
 
 export async function addProduct(product) {
+  const redis = await getRedis();
   const products = await getProducts();
   products.unshift(product);
-  await writeJson(PRODUCTS_PATH, products);
+  await redis.set(PRODUCTS_KEY, JSON.stringify(products));
   return product;
 }
 
-function draftPath(chatId) {
-  return `data/drafts/${chatId}.json`;
+function draftKey(chatId) {
+  return `draft:${chatId}`;
 }
 
 export async function getDraft(chatId) {
-  return readJson(draftPath(chatId));
+  const redis = await getRedis();
+  const raw = await redis.get(draftKey(chatId));
+  return raw ? JSON.parse(raw) : null;
 }
 
 export async function saveDraft(chatId, draft) {
-  await writeJson(draftPath(chatId), draft);
+  const redis = await getRedis();
+  await redis.set(draftKey(chatId), JSON.stringify(draft), { EX: DRAFT_TTL_SECONDS });
 }
 
 export async function deleteDraft(chatId) {
-  try {
-    const blob = await head(draftPath(chatId));
-    await del(blob.url);
-  } catch {
-    // черновика не было — ничего не делаем
-  }
+  const redis = await getRedis();
+  await redis.del(draftKey(chatId));
 }
 
 export async function uploadPhoto(productId, index, buffer, contentType) {
