@@ -220,6 +220,17 @@ img { max-width: 100%; display: block; }
   text-transform: uppercase;
 }
 .product-card__badge--new { background: #c8a96e; color: #0a0a0a; }
+.product-card__dots {
+  position: absolute; bottom: 12px; left: 0; right: 0;
+  display: flex; justify-content: center; gap: 6px;
+}
+.product-card__dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: rgba(255,255,255,0.35);
+  border: none; padding: 0; cursor: pointer;
+}
+.product-card__dot.active { background: #c8a96e; }
+.catalog__status { text-align: center; opacity: 0.5; padding: 40px 0; grid-column: 1 / -1; }
 .product-card__body { padding: 24px; }
 .product-card__title {
   font-family: 'Cormorant Garamond', serif;

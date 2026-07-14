@@ -61,22 +61,109 @@ async function sendOrder(e) {
   }
 }
 
-// ---------- Фильтры каталога ----------
-const filterBtns = document.querySelectorAll('.filter-btn');
-const productCards = document.querySelectorAll('.product-card');
+// ---------- Каталог: загрузка и рендер товаров ----------
+let allProducts = [];
+let activeFilter = 'all';
 
+function formatPrice(n) {
+  return Number(n).toLocaleString('ru-RU') + ' ₽';
+}
+
+function escapeHtml(s) {
+  const div = document.createElement('div');
+  div.textContent = String(s == null ? '' : s);
+  return div.innerHTML;
+}
+
+function productCardHtml(p) {
+  const badgeClass = p.condition === 'Отличное' ? 'product-card__badge product-card__badge--new' : 'product-card__badge';
+  const dots = p.photos.length > 1
+    ? '<div class="product-card__dots">' + p.photos.map(function(_, i) {
+        return '<button type="button" class="product-card__dot' + (i === 0 ? ' active' : '') + '" data-idx="' + i + '" aria-label="Фото ' + (i + 1) + '"></button>';
+      }).join('') + '</div>'
+    : '';
+
+  const descParts = [];
+  if (p.size) descParts.push('Размер ' + p.size);
+  if (p.color) descParts.push(p.color.toLowerCase());
+  let desc = descParts.join(', ');
+  if (p.description) desc += (desc ? '. ' : '') + p.description;
+
+  const name = escapeHtml(p.name);
+  const condition = escapeHtml(p.condition);
+  const photoUrl = escapeHtml(p.photos[0]);
+  const photosJson = escapeHtml(JSON.stringify(p.photos));
+  const price = formatPrice(p.price);
+
+  return (
+    '<div class="product-card" data-category="' + escapeHtml(p.category) + '">' +
+      '<div class="product-card__img-wrap">' +
+        '<img src="' + photoUrl + '" alt="' + name + '" class="product-card__img" data-photos=\'' + photosJson + '\'/>' +
+        '<span class="' + badgeClass + '">' + condition + '</span>' +
+        dots +
+      '</div>' +
+      '<div class="product-card__body">' +
+        '<h3 class="product-card__title">' + name + '</h3>' +
+        '<p class="product-card__desc">' + escapeHtml(desc) + '</p>' +
+        '<div class="product-card__footer">' +
+          '<span class="product-card__price">' + price + '</span>' +
+          '<button class="btn btn--sm" data-order-name="' + name + '" data-order-price="' + price + '">Заказать</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>'
+  );
+}
+
+function renderProducts() {
+  const container = document.getElementById('products');
+  const visible = activeFilter === 'all' ? allProducts : allProducts.filter(function(p) { return p.category === activeFilter; });
+
+  if (visible.length === 0) {
+    container.innerHTML = '<p class="catalog__status">' + (allProducts.length === 0 ? 'Пока нет товаров — скоро появятся.' : 'В этой категории пока пусто.') + '</p>';
+    return;
+  }
+
+  container.innerHTML = visible.map(productCardHtml).join('');
+
+  container.querySelectorAll('[data-order-name]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      openOrder(btn.getAttribute('data-order-name'), btn.getAttribute('data-order-price'));
+    });
+  });
+
+  container.querySelectorAll('.product-card__dot').forEach(function(dot) {
+    dot.addEventListener('click', function() {
+      const wrap = dot.closest('.product-card__img-wrap');
+      const img = wrap.querySelector('.product-card__img');
+      const photos = JSON.parse(img.getAttribute('data-photos'));
+      const idx = parseInt(dot.getAttribute('data-idx'), 10);
+      img.src = photos[idx];
+      wrap.querySelectorAll('.product-card__dot').forEach(function(d) { d.classList.remove('active'); });
+      dot.classList.add('active');
+    });
+  });
+}
+
+async function loadProducts() {
+  try {
+    const res = await fetch('/api/products');
+    allProducts = await res.json();
+  } catch {
+    allProducts = [];
+  }
+  renderProducts();
+}
+
+const filterBtns = document.querySelectorAll('.filter-btn');
 filterBtns.forEach(function(btn) {
   btn.addEventListener('click', function() {
     filterBtns.forEach(function(b) { b.classList.remove('active'); });
     btn.classList.add('active');
-
-    const filter = btn.getAttribute('data-filter');
-    productCards.forEach(function(card) {
-      if (filter === 'all' || card.getAttribute('data-category') === filter) {
-        card.classList.remove('hidden');
-      } else {
-        card.classList.add('hidden');
-      }
-    });
+    activeFilter = btn.getAttribute('data-filter');
+    renderProducts();
   });
 });
+
+if (document.getElementById('products')) {
+  loadProducts();
+}
