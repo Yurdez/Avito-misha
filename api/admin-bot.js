@@ -253,15 +253,19 @@ export default async function handler(req, res) {
   }
 
   const chatId = chat.id;
-  const adminChatId = process.env.ADMIN_CHAT_ID;
+  const adminChatIds = (process.env.ADMIN_CHAT_ID || '')
+    .split(',')
+    .map(function(s) { return s.trim(); })
+    .filter(Boolean);
 
-  if (!adminChatId) {
+  if (adminChatIds.length === 0) {
     await sendMessage(chatId, `Доступ пока не настроен.\n\nТвой chat_id: <code>${chatId}</code>\n\nОтправь это разработчику, чтобы включить доступ.`);
     res.status(200).json({ ok: true });
     return;
   }
 
-  if (String(chatId) !== String(adminChatId)) {
+  if (!adminChatIds.includes(String(chatId))) {
+    await sendMessage(chatId, `У тебя нет доступа к этому боту.\n\nТвой chat_id: <code>${chatId}</code>\n\nПопроси владельца добавить его в список админов.`);
     res.status(200).json({ ok: true });
     return;
   }
