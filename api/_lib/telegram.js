@@ -2,6 +2,17 @@
 
 const API = 'https://api.telegram.org/bot' + process.env.ADMIN_BOT_TOKEN;
 
+// Для сообщений с parse_mode: 'HTML' — экранирует то, что пользователь
+// ввёл текстом (название товара, описание и т.п.), иначе символы <, > или &
+// в тексте либо ломают разметку (Telegram отвечает 400), либо интерпретируются
+// как теги.
+export function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
 async function call(method, payload) {
   const res = await fetch(`${API}/${method}`, {
     method: 'POST',

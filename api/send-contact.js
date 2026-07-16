@@ -21,10 +21,12 @@ export default async function handler(req, res) {
     return;
   }
 
-  const esc = (s) => String(s).slice(0, 1000);
+  const escapeHtml = (s) => String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const esc = (s) => escapeHtml(String(s).slice(0, 1000));
 
   const message =
-    '📩 *Сообщение с сайта AVEREST*\n\n' +
+    '📩 <b>Сообщение с сайта AVEREST</b>\n\n' +
     '👤 ' + esc(name) + '\n' +
     (contact ? '📞 ' + esc(contact) + '\n' : '') +
     '\n💬 ' + esc(userMessage);
@@ -33,7 +35,7 @@ export default async function handler(req, res) {
     const tgRes = await fetch('https://api.telegram.org/bot' + token + '/sendMessage', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'Markdown' }),
+      body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'HTML' }),
     });
 
     if (!tgRes.ok) {

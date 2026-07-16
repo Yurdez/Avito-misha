@@ -22,17 +22,22 @@ export default async function handler(req, res) {
     return;
   }
 
-  const esc = (s) => String(s).slice(0, 500);
+  // slice() ограничивает длину; escapeHtml экранирует <, >, & — иначе значения
+  // вроде имени "A & B" или комментария с "<" ломают parse_mode: 'HTML' и заказ
+  // вообще не долетает до продавца (Telegram отвечает 400 на битую разметку).
+  const escapeHtml = (s) => String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const esc = (s) => escapeHtml(String(s).slice(0, 500));
 
   const message =
-    '🛍 *Новый заказ с сайта!*\n\n' +
-    '*Товар:* ' + esc(itemName) + '\n' +
-    '*Цена:* ' + esc(itemPrice) + '\n\n' +
-    '*Покупатель:*\n' +
+    '🛍 <b>Новый заказ с сайта!</b>\n\n' +
+    '<b>Товар:</b> ' + esc(itemName) + '\n' +
+    '<b>Цена:</b> ' + esc(itemPrice) + '\n\n' +
+    '<b>Покупатель:</b>\n' +
     '👤 ' + esc(name) + '\n' +
     '📞 ' + esc(phone) + '\n' +
     (email ? '📧 ' + esc(email) + '\n' : '') +
-    '\n*Доставка:* ' + esc(delivery) + '\n' +
+    '\n<b>Доставка:</b> ' + esc(delivery) + '\n' +
     (address ? '📍 ' + esc(address) + '\n' : '') +
     (comment ? '\n💬 ' + esc(comment) : '');
 
@@ -40,7 +45,7 @@ export default async function handler(req, res) {
     const tgRes = await fetch('https://api.telegram.org/bot' + token + '/sendMessage', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'Markdown' }),
+      body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'HTML' }),
     });
 
     if (!tgRes.ok) {

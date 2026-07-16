@@ -1,8 +1,12 @@
 // Vercel serverless webhook — приём новых товаров от владельца через Telegram.
 
 import { randomUUID } from 'node:crypto';
-import { getDraft, saveDraft, deleteDraft, addProduct, uploadPhoto } from './_lib/store.js';
-import { sendMessage, sendPhoto, answerCallbackQuery, downloadFile } from './_lib/telegram.js';
+import {
+  getDraft, saveDraft, clearDraft,
+  addDraftPhoto, removeLastDraftPhoto, getDraftPhotos,
+  addProduct, uploadPhoto,
+} from './_lib/store.js';
+import { sendMessage, sendPhoto, answerCallbackQuery, downloadFile, escapeHtml } from './_lib/telegram.js';
 
 const CATEGORIES = {
   jacket: 'Куртки',
@@ -13,6 +17,8 @@ const CATEGORIES = {
 };
 
 const MAX_PHOTOS = 5;
+const MAX_NAME_LENGTH = 200;
+const MAX_DESCRIPTION_LENGTH = 500;
 
 const categoryKeyboard = {
   inline_keyboard: [
@@ -41,11 +47,20 @@ const confirmKeyboard = {
 };
 
 function newDraft() {
-  return { step: 'category', photos: [] };
+  return { step: 'category' };
 }
 
 function formatPrice(n) {
   return n.toLocaleString('ru-RU') + ' ₽';
+}
+
+// Принимает "1800", "1 800", "999.99", "999,50" — но не даёт точке/запятой
+// молча слиться с цифрами (иначе "999.99" превращалось бы в 99999).
+function parsePrice(text) {
+  const cleaned = text.trim().replace(/\s+/g, '').replace(',', '.');
+  if (!/^\d+(\.\d+)?$/.test(cleaned)) return null;
+  const price = Math.round(parseFloat(cleaned));
+  return price > 0 ? price : null;
 }
 
 async function askCategory(chatId) {
@@ -73,38 +88,39 @@ async function askNext(chatId, draft) {
   }
 }
 
-async function sendConfirmation(chatId, draft) {
+async function sendConfirmation(chatId, draft, photos) {
   const caption =
-    `<b>${draft.name}</b>\n` +
-    `Категория: ${CATEGORIES[draft.category]}\n` +
-    `Размер: ${draft.size}\n` +
-    `Цвет: ${draft.color}\n` +
-    `Состояние: ${draft.condition}\n` +
+    `<b>${escapeHtml(draft.name)}</b>\n` +
+    `Категория: ${escapeHtml(CATEGORIES[draft.category])}\n` +
+    `Размер: ${escapeHtml(draft.size)}\n` +
+    `Цвет: ${escapeHtml(draft.color)}\n` +
+    `Состояние: ${escapeHtml(draft.condition)}\n` +
     `Цена: ${formatPrice(draft.price)}\n` +
-    (draft.description && draft.description !== '-' ? `\n${draft.description}\n` : '\n') +
-    `\nФото: ${draft.photos.length} шт.\n\nОпубликовать?`;
+    (draft.description && draft.description !== '-' ? `\n${escapeHtml(draft.description)}\n` : '\n') +
+    `\nФото: ${photos.length} шт.\n\nОпубликовать?`;
 
-  await sendPhoto(chatId, draft.photos[0], caption, { reply_markup: confirmKeyboard });
+  await sendPhoto(chatId, photos[0], caption, { reply_markup: confirmKeyboard });
 }
 
 async function handleText(chatId, draft, text) {
   const trimmed = text.trim();
 
   if (trimmed === '/cancel') {
-    await deleteDraft(chatId);
+    await clearDraft(chatId);
     await sendMessage(chatId, 'Черновик отменён.');
     return;
   }
 
   switch (draft.step) {
     case 'name':
-      draft.name = trimmed;
+      if (!trimmed) { await sendMessage(chatId, 'Название не может быть пустым.'); return; }
+      draft.name = trimmed.slice(0, MAX_NAME_LENGTH);
       draft.step = 'price';
       break;
     case 'price': {
-      const price = parseInt(trimmed.replace(/\D/g, ''), 10);
+      const price = parsePrice(trimmed);
       if (!price) {
-        await sendMessage(chatId, 'Не понял цену. Пришли число, например 1800.');
+        await sendMessage(chatId, 'Не понял цену. Пришли целое число рублей, например 1800.');
         return;
       }
       draft.price = price;
@@ -120,7 +136,7 @@ async function handleText(chatId, draft, text) {
       draft.step = 'condition';
       break;
     case 'description':
-      draft.description = trimmed;
+      draft.description = trimmed.slice(0, MAX_DESCRIPTION_LENGTH);
       draft.step = 'photos';
       break;
     case 'category':
@@ -146,25 +162,25 @@ async function handlePhoto(chatId, draft, photos) {
     await sendMessage(chatId, 'Сейчас фото не нужны — заполним остальные поля, потом дойдём до фото.');
     return;
   }
-  if (draft.photos.length >= MAX_PHOTOS) {
+
+  const largest = photos[photos.length - 1];
+  const { buffer, contentType } = await downloadFile(largest.file_id);
+  const url = await uploadPhoto(`draft-${chatId}`, largest.file_unique_id, buffer, contentType);
+  const count = await addDraftPhoto(chatId, url);
+
+  if (count > MAX_PHOTOS) {
+    await removeLastDraftPhoto(chatId);
     await sendMessage(chatId, `Уже загружено максимум (${MAX_PHOTOS}). Нажми «Готово».`, { reply_markup: photosKeyboard });
     return;
   }
 
-  const largest = photos[photos.length - 1];
-  const { buffer, contentType } = await downloadFile(largest.file_id);
-  const tempId = draft.tempId || (draft.tempId = randomUUID());
-  const url = await uploadPhoto(tempId, draft.photos.length + 1, buffer, contentType);
-  draft.photos.push(url);
-  await saveDraft(chatId, draft);
-
-  if (draft.photos.length >= MAX_PHOTOS) {
+  if (count === MAX_PHOTOS) {
     draft.step = 'confirm';
     await saveDraft(chatId, draft);
-    await sendMessage(chatId, `Загружено ${draft.photos.length} фото — это максимум.`);
-    await sendConfirmation(chatId, draft);
+    await sendMessage(chatId, `Загружено ${count} фото — это максимум.`);
+    await sendConfirmation(chatId, draft, await getDraftPhotos(chatId));
   } else {
-    await sendMessage(chatId, `Фото добавлено (${draft.photos.length}/${MAX_PHOTOS}). Пришли ещё или нажми «Готово».`, { reply_markup: photosKeyboard });
+    await sendMessage(chatId, `Фото добавлено (${count}/${MAX_PHOTOS}). Пришли ещё или нажми «Готово».`, { reply_markup: photosKeyboard });
   }
 }
 
@@ -190,19 +206,23 @@ async function handleCallback(chatId, draft, data, callbackId) {
   }
 
   if (data === 'photos_done') {
-    if (draft.photos.length === 0) {
+    if (draft.step !== 'photos') { await answerCallbackQuery(callbackId, 'Уже подтверждено'); return; }
+    const photos = await getDraftPhotos(chatId);
+    if (photos.length === 0) {
       await answerCallbackQuery(callbackId, 'Нужно хотя бы одно фото');
       return;
     }
     draft.step = 'confirm';
     await saveDraft(chatId, draft);
     await answerCallbackQuery(callbackId, 'Готово');
-    await sendConfirmation(chatId, draft);
+    await sendConfirmation(chatId, draft, photos);
     return;
   }
 
   if (data === 'publish') {
     if (draft.step !== 'confirm') { await answerCallbackQuery(callbackId, 'Черновик устарел'); return; }
+    const photos = await getDraftPhotos(chatId);
+    if (photos.length === 0) { await answerCallbackQuery(callbackId, 'Фото потерялись, начни заново: /start'); return; }
     const product = {
       id: randomUUID(),
       category: draft.category,
@@ -212,18 +232,18 @@ async function handleCallback(chatId, draft, data, callbackId) {
       color: draft.color,
       condition: draft.condition,
       description: draft.description === '-' ? '' : draft.description,
-      photos: draft.photos,
+      photos,
       createdAt: new Date().toISOString(),
     };
     await addProduct(product);
-    await deleteDraft(chatId);
+    await clearDraft(chatId);
     await answerCallbackQuery(callbackId, 'Опубликовано!');
-    await sendMessage(chatId, `✅ «${product.name}» опубликовано на сайте:\nhttps://avito-misha.vercel.app/#catalog`);
+    await sendMessage(chatId, `✅ «${escapeHtml(product.name)}» опубликовано на сайте:\nhttps://avito-misha.vercel.app/#catalog`);
     return;
   }
 
   if (data === 'cancel') {
-    await deleteDraft(chatId);
+    await clearDraft(chatId);
     await answerCallbackQuery(callbackId, 'Отменено');
     await sendMessage(chatId, 'Черновик отменён.');
     return;
@@ -272,7 +292,6 @@ export default async function handler(req, res) {
 
   try {
     let draft = await getDraft(chatId);
-    console.log(`[admin-bot] chat=${chatId} readStep=${draft?.step} incoming=${callback ? 'cb:' + callback.data : message?.text ? 'text:' + message.text : message?.photo ? 'photo' : '?'}`);
 
     if (callback) {
       if (!draft) { await answerCallbackQuery(callback.id, 'Черновик не найден'); res.status(200).json({ ok: true }); return; }
@@ -282,6 +301,7 @@ export default async function handler(req, res) {
     }
 
     if (message?.text === '/start' || message?.text === '/additem' || !draft) {
+      await clearDraft(chatId);
       draft = newDraft();
       await saveDraft(chatId, draft);
       await askCategory(chatId);
