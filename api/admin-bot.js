@@ -279,24 +279,30 @@ export default async function handler(req, res) {
   }
 
   const chatId = chat.id;
-  const adminChatIds = (process.env.ADMIN_CHAT_ID || '')
-    .split(',')
-    .map(function(s) { return s.trim(); })
-    .filter(Boolean);
 
-  if (adminChatIds.length === 0) {
-    await sendMessage(chatId, `Доступ пока не настроен.\n\nТвой chat_id: <code>${chatId}</code>\n\nОтправь это разработчику, чтобы включить доступ.`);
-    res.status(200).json({ ok: true });
-    return;
-  }
-
-  if (!adminChatIds.includes(String(chatId))) {
-    await sendMessage(chatId, `У тебя нет доступа к этому боту.\n\nТвой chat_id: <code>${chatId}</code>\n\nПопроси владельца добавить его в список админов.`);
-    res.status(200).json({ ok: true });
-    return;
-  }
-
+  // Всё, что может кинуть исключение (в т.ч. sendMessage — Telegram может
+  // отказать по любой причине: чужой аккаунт заблокировал бота, чат не
+  // существует и т.п.), должно остаться внутри try — иначе необработанное
+  // исключение превращается в 500 для Telegram, который начинает ретраить
+  // вебхук на ровном месте.
   try {
+    const adminChatIds = (process.env.ADMIN_CHAT_ID || '')
+      .split(',')
+      .map(function(s) { return s.trim(); })
+      .filter(Boolean);
+
+    if (adminChatIds.length === 0) {
+      await sendMessage(chatId, `Доступ пока не настроен.\n\nТвой chat_id: <code>${chatId}</code>\n\nОтправь это разработчику, чтобы включить доступ.`);
+      res.status(200).json({ ok: true });
+      return;
+    }
+
+    if (!adminChatIds.includes(String(chatId))) {
+      await sendMessage(chatId, `У тебя нет доступа к этому боту.\n\nТвой chat_id: <code>${chatId}</code>\n\nПопроси владельца добавить его в список админов.`);
+      res.status(200).json({ ok: true });
+      return;
+    }
+
     let draft = await getDraft(chatId);
 
     if (callback) {
