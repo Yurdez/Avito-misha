@@ -6,7 +6,7 @@ import {
   addDraftPhoto, removeLastDraftPhoto, getDraftPhotos,
   addProduct, uploadPhoto,
 } from './_lib/store.js';
-import { sendMessage, sendPhoto, answerCallbackQuery, downloadFile, escapeHtml } from './_lib/telegram.js';
+import { sendMessage, sendPhoto, answerCallbackQuery, editMessageReplyMarkup, downloadFile, escapeHtml } from './_lib/telegram.js';
 
 const CATEGORIES = {
   jacket: 'Куртки',
@@ -184,7 +184,11 @@ async function handlePhoto(chatId, draft, photos) {
   }
 }
 
-async function handleCallback(chatId, draft, data, callbackId) {
+async function clearButtons(chatId, messageId) {
+  try { await editMessageReplyMarkup(chatId, messageId, { inline_keyboard: [] }); } catch {}
+}
+
+async function handleCallback(chatId, draft, data, callbackId, messageId) {
   if (data.startsWith('cat:')) {
     if (draft.step !== 'category') { await answerCallbackQuery(callbackId, 'Уже выбрано'); return; }
     draft.category = data.slice(4);
@@ -238,6 +242,7 @@ async function handleCallback(chatId, draft, data, callbackId) {
     await addProduct(product);
     await clearDraft(chatId);
     await answerCallbackQuery(callbackId, 'Опубликовано!');
+    await clearButtons(chatId, messageId);
     await sendMessage(chatId, `✅ «${escapeHtml(product.name)}» опубликовано на сайте:\nhttps://avito-misha.vercel.app/#catalog`);
     return;
   }
@@ -245,6 +250,7 @@ async function handleCallback(chatId, draft, data, callbackId) {
   if (data === 'cancel') {
     await clearDraft(chatId);
     await answerCallbackQuery(callbackId, 'Отменено');
+    await clearButtons(chatId, messageId);
     await sendMessage(chatId, 'Черновик отменён.');
     return;
   }
@@ -295,7 +301,7 @@ export default async function handler(req, res) {
 
     if (callback) {
       if (!draft) { await answerCallbackQuery(callback.id, 'Черновик не найден'); res.status(200).json({ ok: true }); return; }
-      await handleCallback(chatId, draft, callback.data, callback.id);
+      await handleCallback(chatId, draft, callback.data, callback.id, callback.message?.message_id);
       res.status(200).json({ ok: true });
       return;
     }
