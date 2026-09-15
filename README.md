@@ -1,90 +1,63 @@
-# SecondStyle — сайт-витрина б/у вещей
+# AVEREST — сайт-витрина брендового секонд-хенда
 
-Сайт для продажи брендовых б/у вещей параллельно с Авито.
+Витрина уникальных брендовых вещей, параллельная продажам на Авито.
+Каждая вещь — отдельная индексируемая страница; бронирование идёт через
+Telegram.
 
-## Файлы
+## Архитектура
 
-- **index.html** — главная страница с каталогом и формой заказа
-- **contacts.html** — страница контактов с формой обратной связи
-- **style.css** — все стили сайта
-- **app.js** — логика фильтров, модального окна, отправки заказов
+Без фреймворка и без сборки: статические `index.html`/`contacts.html` +
+Vercel serverless-функции (`api/`), которые рендерят HTML на сервере для
+каталога и карточек товара (SEO-страницы, работают без JS).
 
-## Настройка Telegram-бота (обязательно!)
+- `index.html`, `contacts.html`, `app.js`, `style.css` — статические страницы.
+- `api/catalog-page.js` → `/catalog` — список товаров, фильтры/поиск/сортировка через query-string.
+- `api/product-page.js` → `/catalog/:slug` — страница товара (галерея, JSON-LD, Telegram/Avito CTA).
+- `api/sitemap.js` → `/sitemap.xml` — генерируется из текущих товаров.
+- `api/products.js` — JSON-список товаров (для тизера на главной).
+- `api/admin-bot.js` — Telegram-бот для владельца: добавление товаров и смена статуса.
+- `api/send-contact.js` — форма «Написать нам» на странице контактов.
+- `api/_lib/store.js` — товары и черновики анкеты в Redis, фото в Vercel Blob.
+- `api/_lib/render.js` — общий рендер HTML-страниц (шапка/подвал, карточка товара, SEO-теги, JSON-LD).
+- `api/_lib/telegram.js` — обёртка над Telegram Bot API для админ-бота.
 
-### 1. Создайте бота
+Данные о товаре: `id, slug, category, brand, name, price, size, color,
+material, condition, description, avitoUrl, measurements, status
+(available|reserved|sold), photos[], createdAt, updatedAt`. Старые записи без
+новых полей получают дефолты при чтении — миграция данных не нужна.
 
-1. Напишите [@BotFather](https://t.me/BotFather) в Telegram
-2. Отправьте команду /newbot
-3. Задайте имя и username боту
-4. Скопируйте **токен** (вида 123456789:ABCdef...)
+## Добавление товаров (через Telegram)
 
-### 2. Получите Chat ID
+Владелец пишет боту `/additem` и отвечает на вопросы (категория, бренд,
+название, цена, размер, цвет, материал, состояние, ссылка на Авито,
+описание/дефекты, фото) → «Опубликовать». Товар сразу появляется на сайте
+по адресу `/catalog/<slug>`.
 
-1. Напишите вашему боту любое сообщение
-2. Откройте в браузере: https://api.telegram.org/botВАШ_ТОКЕН/getUpdates
-3. Найдите поле "chat": {"id": XXXXXXXX} — это ваш Chat ID
+Команда `/items` показывает последние 10 товаров с кнопками для смены
+статуса (🟢 в наличии / 🟡 забронировано / ⚫ продано). Страница проданной
+вещи не удаляется — показывает «нашла своего владельца» + ссылки на каталог
+и подписку на новинки.
 
-### 3. Вставьте данные в файлы
+## Переменные окружения (Vercel)
 
-В файлах **app.js** и **contacts.html** замените:
-- YOUR_BOT_TOKEN — на токен вашего бота
-- YOUR_CHAT_ID — на ваш Chat ID
-- YOUR_TELEGRAM — на ваш username в Telegram
-- +7XXXXXXXXXX — на ваш номер телефона
-- your@email.ru — на вашу почту
+- `REDIS_URL` — подключение к Redis (товары, черновики анкеты).
+- `BLOB_READ_WRITE_TOKEN` — для `@vercel/blob` (фото товаров).
+- `ADMIN_BOT_TOKEN`, `ADMIN_BOT_SECRET`, `ADMIN_CHAT_ID` — бот для владельца (`/additem`, `/items`). `ADMIN_CHAT_ID` — список chat_id через запятую.
+- `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` — куда падает форма «Написать нам» с `/contacts.html`.
+- `SITE_URL` — опционально, по умолчанию `https://avito-misha.vercel.app` (используется в canonical/OG/sitemap).
 
-## Добавление товаров
+## Аналитика
 
-В файле **index.html** найдите блок с классом products и добавляйте карточки по шаблону:
+GA4/Яндекс.Метрика не подключены. `app.js` уже собирает события в
+`window.dataLayer` (`view_product`, `click_telegram`, `click_avito`,
+`click_product` и т.д. через атрибут `data-track` на кнопках/ссылках) — как
+только на сайт добавят реальный счётчик, события начнут доходить без
+изменений в коде.
 
-```html
-<div class="product-card" data-category="КАТЕГОРИЯ">
-  <div class="product-card__img-wrap">
-    <img src="images/ФОТО.jpg" alt="Название"/>
-    <span class="product-card__badge">Состояние</span>
-  </div>
-  <div class="product-card__body">
-    <h3 class="product-card__title">Название товара</h3>
-    <p class="product-card__desc">Описание, размер, состояние</p>
-    <div class="product-card__footer">
-      <span class="product-card__price">Х ХХХ руб.</span>
-      <button class="btn btn--sm" onclick="openOrder('Название','Цена')">Заказать</button>
-    </div>
-  </div>
-</div>
-```
+## Что дальше (не сделано в этой итерации)
 
-**Категории:** jacket, jeans, shoes, dress, accessories
-
-## Фотографии товаров
-
-Создайте папку **images/** и кладите фото в неё.
-Формат: item1.jpg, item2.jpg и т.д.
-
-## Деплой сайта (хостинг)
-
-### Вариант 1 — GitHub Pages (бесплатно)
-1. Settings → Pages → Source: Deploy from a branch → main → Save
-2. Сайт будет на: https://yurdez.github.io/Avito-misha
-
-### Вариант 2 — Netlify (бесплатно)
-1. Зайдите на netlify.com
-2. Drag & Drop папку с файлами — сайт сразу онлайн
-
-### Вариант 3 — Свой домен
-Купите домен (например на reg.ru) и настройте хостинг.
-
-## Структура проекта
-
-```
-Avito-misha/
-├── index.html
-├── contacts.html
-├── style.css
-├── app.js
-├── images/
-│   ├── item1.jpg
-│   ├── item2.jpg
-│   └── ...
-└── README.md
-```
+- Реальные значения телефона/email не добавлены — сайт полагается только на Telegram; при необходимости добавить контакт в `contacts.html`.
+- Замеры (грудь/длина/рукав и т.п.) можно сохранить в `measurements` товара — страница их отрендерит, но шаг с их вводом в Telegram-боте не добавлен (пока проще править вручную).
+- Полноценной админки нет — статус меняется через `/items`, остальные поля товара после публикации можно поправить только напрямую в Redis.
+- Изображения не конвертируются в WebP/AVIF — используются как загружены (JPEG через Telegram → Vercel Blob).
+- Домен всё ещё `avito-misha.vercel.app` — при покупке своего домена поменять `robots.txt` и `SITE_URL`.

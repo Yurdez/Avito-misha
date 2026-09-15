@@ -4,6 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>AVEREST — брендовые вещи по доступным ценам</title>
+  <meta name="description" content="Отобранные брендовые вещи из секонд-хендов. Реальные фотографии, честное описание состояния и отправка по России. Бронирование в Telegram."/>
+  <link rel="canonical" href="https://avito-misha.vercel.app/"/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:title" content="AVEREST — брендовые вещи с характером"/>
+  <meta property="og:description" content="Отобранные брендовые вещи из секонд-хендов. Реальные фотографии, честное описание состояния и отправка по России."/>
+  <meta property="og:url" content="https://avito-misha.vercel.app/"/>
+  <meta property="og:image" content="https://placehold.co/1200x630/111/c8a96e?text=AVEREST"/>
+  <meta name="twitter:card" content="summary_large_image"/>
   <link rel="stylesheet" href="style.css"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -15,97 +23,120 @@
     <a href="index.html" class="logo">AVER<span>EST</span></a>
     <nav class="nav">
       <a href="index.html" class="nav__link active">Главная</a>
-      <a href="#catalog" class="nav__link">Каталог</a>
+      <a href="/catalog" class="nav__link">Каталог</a>
       <a href="contacts.html" class="nav__link">Контакты</a>
     </nav>
-    <a href="https://t.me/brendyshmendy_bot" target="_blank" class="btn btn--sm">Telegram</a>
+    <a href="https://t.me/brendyshmendy_bot?text=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5!" target="_blank" rel="noopener" class="btn btn--sm" data-track="click_telegram" data-track-params='{"place":"header"}'>Telegram</a>
   </div>
 </header>
 
 <section class="hero">
   <div class="container hero__inner">
     <div class="hero__text">
-      <h1 class="hero__title">Брендовые вещи<br/><span>по честным ценам</span></h1>
-      <p class="hero__sub">Отборный секонд-хенд: выбираем лучшее — продаём с заботой. Доставка по всей России.</p>
+      <h1 class="hero__title">Брендовые вещи<br/><span>с характером</span></h1>
+      <p class="hero__sub">Отобранные брендовые вещи из секонд-хендов. Реальные фотографии, честное описание состояния и отправка по России.</p>
       <div class="hero__btns">
-        <a href="#catalog" class="btn">Смотреть каталог</a>
-        <a href="contacts.html" class="btn btn--outline">Связаться с нами</a>
+        <a href="#new-arrivals" class="btn">Смотреть новые поступления</a>
+        <a href="https://t.me/brendyshmendy_bot?text=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5!" target="_blank" rel="noopener" class="btn btn--outline" data-track="click_telegram" data-track-params='{"place":"hero"}'>Telegram</a>
       </div>
     </div>
   </div>
 </section>
 
 <section class="features">
-  <div class="container features__grid">
-    <div class="feature-card">
-      <div class="feature-card__icon">✦</div>
-      <h3>Честное состояние</h3>
-      <p>Подробно описываем каждый дефект — никаких сюрпризов при получении.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-card__icon">◈</div>
-      <h3>Доставка по России</h3>
-      <p>Отправляем Почтой России, СДЭК и Боксберри. Упакуем бережно.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-card__icon">◎</div>
-      <h3>Быстрый ответ</h3>
-      <p>Отвечаем в Telegram в течение 15 минут в рабочее время.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-card__icon">◇</div>
-      <h3>Лучшая цена</h3>
-      <p>Цены ниже рынка — покупаем напрямую из секонд-хенда.</p>
-    </div>
-  </div>
-</section>
-
-<section class="catalog" id="catalog">
   <div class="container">
-    <h2 class="section-title">Каталог</h2>
-    <div class="filters">
-      <button class="filter-btn active" data-filter="all">Все</button>
-      <button class="filter-btn" data-filter="jacket">Куртки</button>
-      <button class="filter-btn" data-filter="jeans">Джинсы</button>
-      <button class="filter-btn" data-filter="shoes">Обувь</button>
-      <button class="filter-btn" data-filter="dress">Платья</button>
-      <button class="filter-btn" data-filter="accessories">Аксессуары</button>
-    </div>
-    <div class="products" id="products">
-      <p class="catalog__status">Загружаем каталог…</p>
+    <h2 class="section-title">Почему AVEREST</h2>
+    <div class="features__grid">
+      <div class="feature-card">
+        <div class="feature-card__icon">✦</div>
+        <h3>Реальные фотографии</h3>
+        <p>Фотографируем именно ту вещь, которую вы получите — без стоковых картинок.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-card__icon">◈</div>
+        <h3>Честное состояние</h3>
+        <p>Подробно описываем состояние каждой вещи — никаких сюрпризов при получении.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-card__icon">◎</div>
+        <h3>Показываем дефекты</h3>
+        <p>Если есть потёртость или дефект — пишем прямо в описании и показываем на фото.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-card__icon">◇</div>
+        <h3>Проверка перед продажей</h3>
+        <p>Каждая вещь проверяется на дефекты и соответствие описанию перед публикацией.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-card__icon">✧</div>
+        <h3>Доставка по России</h3>
+        <p>Отправляем Почтой России, СДЭК и Боксберри. Упакуем бережно.</p>
+      </div>
     </div>
   </div>
 </section>
 
-<div class="modal-overlay" id="modalOverlay" onclick="closeOrder()">
-  <div class="modal" onclick="event.stopPropagation()">
-    <button class="modal__close" onclick="closeOrder()">&#x2715;</button>
-    <h2 class="modal__title">Оформить заказ</h2>
-    <p class="modal__item" id="modalItemName"></p>
-    <form id="orderForm" onsubmit="sendOrder(event)">
-      <div class="form-group"><label>Ваше имя *</label><input type="text" name="name" placeholder="Иван Иванов" required/></div>
-      <div class="form-group"><label>Телефон *</label><input type="tel" name="phone" placeholder="+7 999 000-00-00" required/></div>
-      <div class="form-group"><label>Email</label><input type="email" name="email" placeholder="ivan@mail.ru"/></div>
-      <div class="form-group"><label>Способ доставки *</label>
-        <select name="delivery" required>
-          <option value="">Выберите...</option>
-          <option>Почта России</option>
-          <option>СДЭК</option>
-          <option>Боксберри</option>
-          <option>Самовывоз</option>
-        </select>
-      </div>
-      <div class="form-group"><label>Адрес доставки</label><input type="text" name="address" placeholder="Город, улица, дом"/></div>
-      <div class="form-group"><label>Комментарий</label><textarea name="comment" placeholder="Любые пожелания..."></textarea></div>
-      <button type="submit" class="btn btn--full">Отправить заказ</button>
-    </form>
-    <div class="modal__success" id="modalSuccess" style="display:none">
-      <div class="success-icon">✦</div>
-      <h3>Заказ принят</h3>
-      <p>Свяжемся с вами в ближайшее время в Telegram или по телефону.</p>
+<section class="how-it-works">
+  <div class="container">
+    <h2 class="section-title">Как мы работаем</h2>
+    <div class="how-it-works__grid">
+      <div class="how-step"><span class="how-step__num">01</span><p>Находим интересные брендовые вещи в секонд-хендах</p></div>
+      <div class="how-step"><span class="how-step__num">02</span><p>Проверяем состояние</p></div>
+      <div class="how-step"><span class="how-step__num">03</span><p>Делаем реальные фотографии</p></div>
+      <div class="how-step"><span class="how-step__num">04</span><p>Честно описываем вещь</p></div>
+      <div class="how-step"><span class="how-step__num">05</span><p>Вы выбираете и бронируете в Telegram</p></div>
+      <div class="how-step"><span class="how-step__num">06</span><p>Отправляем вам</p></div>
     </div>
   </div>
-</div>
+</section>
+
+<section class="catalog" id="new-arrivals">
+  <div class="container">
+    <h2 class="section-title">Новые поступления</h2>
+    <div class="products" id="newArrivals">
+      <p class="catalog__status">Загружаем...</p>
+    </div>
+    <div class="catalog__more">
+      <a href="/catalog" class="btn btn--outline">Смотреть весь каталог →</a>
+    </div>
+  </div>
+</section>
+
+<section class="cta-banner">
+  <div class="container cta-banner__inner">
+    <h2>Не нашли нужную вещь?</h2>
+    <p>Напишите нам, что вы ищете. Если найдём подходящий вариант — сообщим.</p>
+    <a href="https://t.me/brendyshmendy_bot?text=%D0%98%D1%89%D1%83%20%D0%BA%D0%BE%D0%BD%D0%BA%D1%80%D0%B5%D1%82%D0%BD%D1%83%D1%8E%20%D0%B2%D0%B5%D1%89%D1%8C%3A%20" target="_blank" rel="noopener" class="btn" data-track="click_telegram" data-track-params='{"place":"looking_for"}'>Поискать в Telegram</a>
+  </div>
+</section>
+
+<section class="about">
+  <div class="container about__inner">
+    <h2 class="section-title">О нас</h2>
+    <p>Мы ищем интересные брендовые вещи в секонд-хендах, проверяем их состояние и предлагаем их тем, кто ценит хорошие вещи без переплаты. Каждая вещь существует в единственном экземпляре — если она приглянулась, лучше не откладывать.</p>
+  </div>
+</section>
+
+<section class="policy">
+  <div class="container">
+    <h2 class="section-title">Доставка, оплата, возврат</h2>
+    <!-- TODO(владелец): уточнить точные условия доставки/оплаты/возврата, когда они будут зафиксированы -->
+    <div class="policy-grid">
+      <div class="policy-card">
+        <h3>Доставка</h3>
+        <p>Отправляем по всей России Почтой России, СДЭК или Боксберри. Способ и стоимость доставки обсудим в Telegram при бронировании.</p>
+      </div>
+      <div class="policy-card">
+        <h3>Оплата</h3>
+        <p>После подтверждения бронирования в Telegram пришлём реквизиты для оплаты в чате.</p>
+      </div>
+      <div class="policy-card">
+        <h3>Возврат</h3>
+        <p>Если вещь пришла не такой, как в описании — решаем вопрос индивидуально, напишите нам в Telegram.</p>
+      </div>
+    </div>
+  </div>
+</section>
 
 <footer class="footer">
   <div class="container footer__inner">
@@ -115,14 +146,12 @@
     </div>
     <div class="footer__links">
       <a href="index.html">Главная</a>
-      <a href="#catalog">Каталог</a>
+      <a href="/catalog">Каталог</a>
       <a href="contacts.html">Контакты</a>
     </div>
     <div class="footer__contacts">
-      <a href="tel:+7XXXXXXXXXX">+7 (XXX) XXX-XX-XX</a>
-      <a href="mailto:your@email.ru">your@email.ru</a>
-      <a href="https://t.me/brendyshmendy_bot" target="_blank">Telegram</a>
-      <a href="https://www.avito.ru/" target="_blank">Авито</a>
+      <a href="https://t.me/brendyshmendy_bot?text=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5!" target="_blank" rel="noopener" data-track="click_telegram" data-track-params='{"place":"footer"}'>Telegram</a>
+      <a href="https://www.avito.ru/" target="_blank" rel="noopener">Авито</a>
     </div>
   </div>
   <div class="footer__bottom">

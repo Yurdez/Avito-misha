@@ -4,6 +4,8 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Контакты — AVEREST</title>
+  <meta name="description" content="Свяжитесь с AVEREST в Telegram или через форму на сайте — ответим в течение 15 минут."/>
+  <link rel="canonical" href="https://avito-misha.vercel.app/contacts.html"/>
   <link rel="stylesheet" href="style.css"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -15,10 +17,10 @@
     <a href="index.html" class="logo">AVER<span>EST</span></a>
     <nav class="nav">
       <a href="index.html" class="nav__link">Главная</a>
-      <a href="index.html#catalog" class="nav__link">Каталог</a>
+      <a href="/catalog" class="nav__link">Каталог</a>
       <a href="contacts.html" class="nav__link active">Контакты</a>
     </nav>
-    <a href="https://t.me/brendyshmendy_bot" target="_blank" class="btn btn--sm">Telegram</a>
+    <a href="https://t.me/brendyshmendy_bot" target="_blank" rel="noopener" class="btn btn--sm" data-track="click_telegram" data-track-params='{"place":"header"}'>Telegram</a>
   </div>
 </header>
 
@@ -32,25 +34,13 @@
       <div class="contact-card">
         <div class="contact-card__icon">✦</div>
         <h3>Telegram</h3>
-        <a href="https://t.me/brendyshmendy_bot" target="_blank">@brendyshmendy_bot</a>
+        <a href="https://t.me/brendyshmendy_bot" target="_blank" rel="noopener" data-track="click_telegram" data-track-params='{"place":"contacts_card"}'>@brendyshmendy_bot</a>
         <p>Самый быстрый способ. Ответ в течение 15 минут.</p>
-      </div>
-      <div class="contact-card">
-        <div class="contact-card__icon">◎</div>
-        <h3>Телефон</h3>
-        <a href="tel:+7XXXXXXXXXX">+7 (XXX) XXX-XX-XX</a>
-        <p>Пн–Пт: 10:00–20:00, Сб–Вс: 11:00–18:00</p>
-      </div>
-      <div class="contact-card">
-        <div class="contact-card__icon">◈</div>
-        <h3>Email</h3>
-        <a href="mailto:your@email.ru">your@email.ru</a>
-        <p>Ответим в течение нескольких часов.</p>
       </div>
       <div class="contact-card">
         <div class="contact-card__icon">◇</div>
         <h3>Авито</h3>
-        <a href="https://www.avito.ru/" target="_blank">Наш профиль</a>
+        <a href="https://www.avito.ru/" target="_blank" rel="noopener" data-track="click_avito">Наш профиль</a>
         <p>Все товары также на Авито.</p>
       </div>
     </div>
@@ -81,14 +71,12 @@
     </div>
     <div class="footer__links">
       <a href="index.html">Главная</a>
-      <a href="index.html#catalog">Каталог</a>
+      <a href="/catalog">Каталог</a>
       <a href="contacts.html">Контакты</a>
     </div>
     <div class="footer__contacts">
-      <a href="tel:+7XXXXXXXXXX">+7 (XXX) XXX-XX-XX</a>
-      <a href="mailto:your@email.ru">your@email.ru</a>
-      <a href="https://t.me/brendyshmendy_bot" target="_blank">Telegram</a>
-      <a href="https://www.avito.ru/" target="_blank">Авито</a>
+      <a href="https://t.me/brendyshmendy_bot" target="_blank" rel="noopener" data-track="click_telegram" data-track-params='{"place":"footer"}'>Telegram</a>
+      <a href="https://www.avito.ru/" target="_blank" rel="noopener">Авито</a>
     </div>
   </div>
   <div class="footer__bottom">

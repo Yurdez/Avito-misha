@@ -6,20 +6,56 @@
 
 import { put } from '@vercel/blob';
 import getRedis from './redis.js';
+import { slugify } from './render.js';
 
 const PRODUCTS_KEY = 'products';
 const DRAFT_TTL_SECONDS = 60 * 60; // черновик анкеты живёт час без активности
 
+// Товары, сохранённые до появления полей brand/status/slug/material/avitoUrl,
+// не переписываются в Redis — дефолты применяются при каждом чтении, чтобы
+// старые карточки не пропадали и не требовали ручной миграции данных.
+function normalizeProduct(p) {
+  return {
+    brand: '',
+    material: '',
+    avitoUrl: '',
+    measurements: null,
+    status: 'available',
+    updatedAt: p.createdAt,
+    ...p,
+    slug: p.slug || slugify(`${p.brand || ''} ${p.name}`, String(p.id).slice(0, 8)),
+  };
+}
+
 export async function getProducts() {
   const redis = await getRedis();
   const raw = await redis.lRange(PRODUCTS_KEY, 0, -1);
-  return raw.map((s) => JSON.parse(s));
+  return raw.map((s) => normalizeProduct(JSON.parse(s)));
+}
+
+export async function getProductBySlug(slug) {
+  const products = await getProducts();
+  return products.find((p) => p.slug === slug) || null;
 }
 
 export async function addProduct(product) {
   const redis = await getRedis();
-  await redis.lPush(PRODUCTS_KEY, JSON.stringify(product));
-  return product;
+  const withSlug = { ...product, slug: slugify(`${product.brand || ''} ${product.name}`, String(product.id).slice(0, 8)) };
+  await redis.lPush(PRODUCTS_KEY, JSON.stringify(withSlug));
+  return withSlug;
+}
+
+// Список — не хэш, поэтому обновление статуса одной вещи требует найти её
+// позицию и переписать именно этот элемент (lSet), не трогая остальные —
+// LPUSH/RPUSH тут не подходят, порядок и содержимое соседних записей важны.
+export async function setProductStatus(id, status) {
+  const redis = await getRedis();
+  const raw = await redis.lRange(PRODUCTS_KEY, 0, -1);
+  const index = raw.findIndex((s) => JSON.parse(s).id === id);
+  if (index === -1) return null;
+  const updated = { ...JSON.parse(raw[index]), status, updatedAt: new Date().toISOString() };
+  await redis.lSet(PRODUCTS_KEY, index, JSON.stringify(updated));
+  return normalizeProduct(updated);
 }
 
 function draftKey(chatId) {

@@ -4,29 +4,31 @@ import { randomUUID } from 'node:crypto';
 import {
   getDraft, saveDraft, clearDraft,
   addDraftPhoto, removeLastDraftPhoto, getDraftPhotos,
-  addProduct, uploadPhoto,
+  addProduct, getProducts, setProductStatus, uploadPhoto,
 } from './_lib/store.js';
 import { sendMessage, sendPhoto, answerCallbackQuery, editMessageReplyMarkup, downloadFile, escapeHtml } from './_lib/telegram.js';
-
-const CATEGORIES = {
-  jacket: 'Куртки',
-  jeans: 'Джинсы',
-  shoes: 'Обувь',
-  dress: 'Платья',
-  accessories: 'Аксессуары',
-};
+import { CATEGORIES, STATUS, isHttpsUrl, formatPrice as formatPriceRub } from './_lib/render.js';
 
 const MAX_PHOTOS = 5;
 const MAX_NAME_LENGTH = 200;
 const MAX_DESCRIPTION_LENGTH = 500;
 
+const CATEGORY_KEYS = Object.keys(CATEGORIES);
 const categoryKeyboard = {
-  inline_keyboard: [
-    [{ text: 'Куртки', callback_data: 'cat:jacket' }, { text: 'Джинсы', callback_data: 'cat:jeans' }],
-    [{ text: 'Обувь', callback_data: 'cat:shoes' }, { text: 'Платья', callback_data: 'cat:dress' }],
-    [{ text: 'Аксессуары', callback_data: 'cat:accessories' }],
-  ],
+  inline_keyboard: CATEGORY_KEYS.reduce((rows, key, i) => {
+    const btn = { text: CATEGORIES[key], callback_data: 'cat:' + key };
+    if (i % 2 === 0) rows.push([btn]); else rows[rows.length - 1].push(btn);
+    return rows;
+  }, []),
 };
+
+const statusKeyboard = (id) => ({
+  inline_keyboard: [[
+    { text: `${STATUS.available.emoji} В наличии`, callback_data: `status:${id}:available` },
+    { text: `${STATUS.reserved.emoji} Забронировано`, callback_data: `status:${id}:reserved` },
+    { text: `${STATUS.sold.emoji} Продано`, callback_data: `status:${id}:sold` },
+  ]],
+});
 
 const conditionKeyboard = {
   inline_keyboard: [[
@@ -50,10 +52,6 @@ function newDraft() {
   return { step: 'category' };
 }
 
-function formatPrice(n) {
-  return n.toLocaleString('ru-RU') + ' ₽';
-}
-
 // Принимает "1800", "1 800", "999.99", "999,50" — но не даёт точке/запятой
 // молча слиться с цифрами (иначе "999.99" превращалось бы в 99999).
 function parsePrice(text) {
@@ -69,16 +67,22 @@ async function askCategory(chatId) {
 
 async function askNext(chatId, draft) {
   switch (draft.step) {
+    case 'brand':
+      return sendMessage(chatId, 'Бренд (например: Nike, Zara) — или «-», если без бренда:');
     case 'name':
-      return sendMessage(chatId, 'Название товара (например: «Куртка демисезонная Zara»):');
+      return sendMessage(chatId, 'Название товара (например: «Демисезонная куртка»):');
     case 'price':
       return sendMessage(chatId, 'Цена в рублях (только число, например 1800):');
     case 'size':
       return sendMessage(chatId, 'Размер (например: M, 32/32, 42):');
     case 'color':
       return sendMessage(chatId, 'Цвет:');
+    case 'material':
+      return sendMessage(chatId, 'Материал (например: хлопок, деним) — или «-», если не важно:');
     case 'condition':
       return sendMessage(chatId, 'Состояние:', { reply_markup: conditionKeyboard });
+    case 'avitoUrl':
+      return sendMessage(chatId, 'Ссылка на объявление на Авито — или «-», если пока нет:');
     case 'description':
       return sendMessage(chatId, 'Короткое описание/дефекты (или отправь «-», если нечего добавить):');
     case 'photos':
@@ -90,12 +94,14 @@ async function askNext(chatId, draft) {
 
 async function sendConfirmation(chatId, draft, photos) {
   const caption =
-    `<b>${escapeHtml(draft.name)}</b>\n` +
+    `<b>${draft.brand ? escapeHtml(draft.brand) + ' ' : ''}${escapeHtml(draft.name)}</b>\n` +
     `Категория: ${escapeHtml(CATEGORIES[draft.category])}\n` +
     `Размер: ${escapeHtml(draft.size)}\n` +
     `Цвет: ${escapeHtml(draft.color)}\n` +
+    (draft.material ? `Материал: ${escapeHtml(draft.material)}\n` : '') +
     `Состояние: ${escapeHtml(draft.condition)}\n` +
-    `Цена: ${formatPrice(draft.price)}\n` +
+    `Цена: ${formatPriceRub(draft.price)}\n` +
+    (draft.avitoUrl ? `Авито: ${escapeHtml(draft.avitoUrl)}\n` : '') +
     (draft.description && draft.description !== '-' ? `\n${escapeHtml(draft.description)}\n` : '\n') +
     `\nФото: ${photos.length} шт.\n\nОпубликовать?`;
 
@@ -112,6 +118,10 @@ async function handleText(chatId, draft, text) {
   }
 
   switch (draft.step) {
+    case 'brand':
+      draft.brand = trimmed === '-' ? '' : trimmed.slice(0, 100);
+      draft.step = 'name';
+      break;
     case 'name':
       if (!trimmed) { await sendMessage(chatId, 'Название не может быть пустым.'); return; }
       draft.name = trimmed.slice(0, MAX_NAME_LENGTH);
@@ -133,7 +143,19 @@ async function handleText(chatId, draft, text) {
       break;
     case 'color':
       draft.color = trimmed;
+      draft.step = 'material';
+      break;
+    case 'material':
+      draft.material = trimmed === '-' ? '' : trimmed.slice(0, 100);
       draft.step = 'condition';
+      break;
+    case 'avitoUrl':
+      if (trimmed !== '-' && !isHttpsUrl(trimmed)) {
+        await sendMessage(chatId, 'Похоже, это не ссылка. Пришли ссылку вида https://www.avito.ru/... или «-».');
+        return;
+      }
+      draft.avitoUrl = trimmed === '-' ? '' : trimmed;
+      draft.step = 'description';
       break;
     case 'description':
       draft.description = trimmed.slice(0, MAX_DESCRIPTION_LENGTH);
@@ -188,11 +210,48 @@ async function clearButtons(chatId, messageId) {
   try { await editMessageReplyMarkup(chatId, messageId, { inline_keyboard: [] }); } catch {}
 }
 
+const ITEMS_LIST_LIMIT = 10;
+
+async function listItemsForStatus(chatId) {
+  const products = await getProducts();
+  if (products.length === 0) {
+    await sendMessage(chatId, 'Пока нет ни одного товара. Добавь первый: /additem');
+    return;
+  }
+
+  const recent = products.slice(0, ITEMS_LIST_LIMIT);
+  await sendMessage(chatId, `Последние ${recent.length} товаров — нажми кнопку, чтобы изменить статус:`);
+
+  for (const p of recent) {
+    const caption =
+      `${STATUS[p.status]?.emoji || '🟢'} <b>${p.brand ? escapeHtml(p.brand) + ' ' : ''}${escapeHtml(p.name)}</b>\n` +
+      `Размер ${escapeHtml(p.size)} · ${formatPriceRub(p.price)}\n` +
+      `Статус: ${escapeHtml(STATUS[p.status]?.label || 'В наличии')}`;
+
+    if (p.photos && p.photos[0]) {
+      await sendPhoto(chatId, p.photos[0], caption, { reply_markup: statusKeyboard(p.id) });
+    } else {
+      await sendMessage(chatId, caption, { reply_markup: statusKeyboard(p.id) });
+    }
+  }
+}
+
+// Не привязан к draft — кнопки статуса приходят из /items, где никакого
+// черновика анкеты нет вообще (в отличие от остальных callback'ов ниже).
+async function handleStatusCallback(data, callbackId) {
+  const [, id, newStatus] = data.split(':');
+  if (!STATUS[newStatus]) { await answerCallbackQuery(callbackId, 'Неизвестный статус'); return; }
+  const updated = await setProductStatus(id, newStatus);
+  if (!updated) { await answerCallbackQuery(callbackId, 'Товар не найден'); return; }
+  console.log(JSON.stringify({ event: newStatus === 'sold' ? 'product_sold' : newStatus === 'reserved' ? 'product_reserved' : 'product_available', productId: id }));
+  await answerCallbackQuery(callbackId, `Статус: ${STATUS[newStatus].label}`);
+}
+
 async function handleCallback(chatId, draft, data, callbackId, messageId) {
   if (data.startsWith('cat:')) {
     if (draft.step !== 'category') { await answerCallbackQuery(callbackId, 'Уже выбрано'); return; }
     draft.category = data.slice(4);
-    draft.step = 'name';
+    draft.step = 'brand';
     await saveDraft(chatId, draft);
     await answerCallbackQuery(callbackId, CATEGORIES[draft.category]);
     await askNext(chatId, draft);
@@ -202,7 +261,7 @@ async function handleCallback(chatId, draft, data, callbackId, messageId) {
   if (data.startsWith('cond:')) {
     if (draft.step !== 'condition') { await answerCallbackQuery(callbackId, 'Уже выбрано'); return; }
     draft.condition = data.slice(5);
-    draft.step = 'description';
+    draft.step = 'avitoUrl';
     await saveDraft(chatId, draft);
     await answerCallbackQuery(callbackId, draft.condition);
     await askNext(chatId, draft);
@@ -230,20 +289,25 @@ async function handleCallback(chatId, draft, data, callbackId, messageId) {
     const product = {
       id: randomUUID(),
       category: draft.category,
+      brand: draft.brand || '',
       name: draft.name,
       price: draft.price,
       size: draft.size,
       color: draft.color,
+      material: draft.material || '',
       condition: draft.condition,
+      avitoUrl: draft.avitoUrl || '',
       description: draft.description === '-' ? '' : draft.description,
+      status: 'available',
       photos,
       createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
-    await addProduct(product);
+    const published = await addProduct(product);
     await clearDraft(chatId);
     await answerCallbackQuery(callbackId, 'Опубликовано!');
     await clearButtons(chatId, messageId);
-    await sendMessage(chatId, `✅ «${escapeHtml(product.name)}» опубликовано на сайте:\nhttps://avito-misha.vercel.app/#catalog`);
+    await sendMessage(chatId, `✅ «${escapeHtml(product.name)}» опубликовано на сайте:\nhttps://avito-misha.vercel.app/catalog/${published.slug}`);
     return;
   }
 
@@ -303,11 +367,23 @@ export default async function handler(req, res) {
       return;
     }
 
+    if (callback?.data?.startsWith('status:')) {
+      await handleStatusCallback(callback.data, callback.id);
+      res.status(200).json({ ok: true });
+      return;
+    }
+
     let draft = await getDraft(chatId);
 
     if (callback) {
       if (!draft) { await answerCallbackQuery(callback.id, 'Черновик не найден'); res.status(200).json({ ok: true }); return; }
       await handleCallback(chatId, draft, callback.data, callback.id, callback.message?.message_id);
+      res.status(200).json({ ok: true });
+      return;
+    }
+
+    if (message?.text === '/items') {
+      await listItemsForStatus(chatId);
       res.status(200).json({ ok: true });
       return;
     }

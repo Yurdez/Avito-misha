@@ -1,0 +1,7 @@
+{
+  "rewrites": [
+    { "source": "/catalog", "destination": "/api/catalog-page" },
+    { "source": "/catalog/:slug", "destination": "/api/product-page?slug=:slug" },
+    { "source": "/sitemap.xml", "destination": "/api/sitemap" }
+  ]
+}
