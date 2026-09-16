@@ -25,6 +25,58 @@ export const STATUS = {
   sold: { label: 'Продано', emoji: '⚫', schema: 'https://schema.org/OutOfStock' },
 };
 
+// Единый стандарт честной оценки состояния (см. ТЗ, этап 6 — выбрана словесная шкала).
+export const CONDITION = {
+  new: { label: 'Новое', emoji: '🆕' },
+  like_new: { label: 'Как новое', emoji: '✨' },
+  very_good: { label: 'Очень хорошее', emoji: '👍' },
+  good: { label: 'Хорошее', emoji: '✔' },
+  worn: { label: 'Есть заметные следы носки', emoji: '〰' },
+};
+
+// Товары, добавленные до введения шкалы, хранят condition как произвольный
+// текст ("Хорошее"/"Отличное") — показываем его как есть, без иконки, вместо
+// того чтобы падать или задним числом переписывать данные.
+export function resolveCondition(value) {
+  return CONDITION[value] || { label: value || '', emoji: '' };
+}
+
+// Замеры зависят от типа вещи — для аксессуаров шаг замеров в боте пропускается.
+export const MEASUREMENT_FIELDS = {
+  jacket: ['Плечи', 'Грудь', 'Длина', 'Рукав'],
+  jeans: ['Талия', 'Бёдра', 'Длина', 'Внутренний шов'],
+  pants: ['Талия', 'Бёдра', 'Длина', 'Внутренний шов'],
+  tshirt: ['Плечи', 'Грудь', 'Длина'],
+  hoodie: ['Плечи', 'Грудь', 'Длина', 'Рукав'],
+  sweatshirt: ['Плечи', 'Грудь', 'Длина', 'Рукав'],
+  shoes: ['Длина стельки'],
+  dress: ['Грудь', 'Талия', 'Бёдра', 'Длина'],
+  accessories: [],
+};
+
+const NEW_ARRIVAL_DAYS = 7;
+export function isNewArrival(createdAt) {
+  if (!createdAt) return false;
+  const ageMs = Date.now() - new Date(createdAt).getTime();
+  return ageMs >= 0 && ageMs <= NEW_ARRIVAL_DAYS * 24 * 60 * 60 * 1000;
+}
+
+// Категория → URL-сегмент для чистых путей /catalog/jackets (см. vercel.json).
+export const CATEGORY_SLUGS = {
+  jacket: 'jackets',
+  jeans: 'jeans',
+  pants: 'pants',
+  tshirt: 'tshirts',
+  hoodie: 'hoodies',
+  sweatshirt: 'sweatshirts',
+  shoes: 'shoes',
+  dress: 'dresses',
+  accessories: 'accessories',
+};
+export const SLUG_TO_CATEGORY = Object.fromEntries(
+  Object.entries(CATEGORY_SLUGS).map(([key, slug]) => [slug, key])
+);
+
 export function escapeHtml(s) {
   return String(s == null ? '' : s)
     .replace(/&/g, '&amp;')
@@ -75,11 +127,11 @@ export function telegramLink(text) {
 }
 
 export function bookingMessage(p) {
-  return `Здравствуйте! Хочу забронировать:\n\n${p.brand ? p.brand + ' ' : ''}${p.name}\nРазмер ${p.size}\nЦена ${formatPrice(p.price)}\nID ${p.id.slice(0, 8)}`;
+  return `Здравствуйте! Хочу забронировать:\n\n${p.brand ? p.brand + ' ' : ''}${p.name}\nРазмер ${p.size}\nЦена ${formatPrice(p.price)}\nАртикул ${p.sku}`;
 }
 
 export function questionMessage(p) {
-  return `Здравствуйте! Есть вопрос про: ${p.brand ? p.brand + ' ' : ''}${p.name} (ID ${p.id.slice(0, 8)})`;
+  return `Здравствуйте! Есть вопрос про: ${p.brand ? p.brand + ' ' : ''}${p.name} (артикул ${p.sku})`;
 }
 
 export function statusBadgeHtml(status) {
@@ -118,7 +170,7 @@ export function productJsonLd(p, url) {
     name: (p.brand ? p.brand + ' ' : '') + p.name,
     image: p.photos || [],
     description: p.description || `${p.brand || ''} ${p.name}, размер ${p.size}`.trim(),
-    sku: p.id,
+    sku: p.sku,
     brand: p.brand ? { '@type': 'Brand', name: p.brand } : undefined,
     itemCondition: 'https://schema.org/UsedCondition',
     offers: {
@@ -223,16 +275,19 @@ export function productCardHtml(p) {
   const safePhotos = (p.photos || []).filter(isHttpsUrl);
   const photo = safePhotos[0] || 'https://placehold.co/400x500/111/c8a96e?text=AVEREST';
   const status = STATUS[p.status] || STATUS.available;
+  const condition = resolveCondition(p.condition);
   const brandLine = p.brand ? `<p class="product-card__brand">${escapeHtml(p.brand)}</p>` : '';
+  const newBadge = isNewArrival(p.createdAt) ? '<span class="product-card__badge product-card__badge--new">Новинка</span>' : '';
   return `<a href="/catalog/${escapeAttr(p.slug)}" class="product-card" data-track="click_product" data-track-params='{"id":"${p.id}"}'>
     <div class="product-card__img-wrap">
       <img src="${escapeAttr(photo)}" alt="${escapeAttr((p.brand ? p.brand + ' ' : '') + p.name)}" class="product-card__img" loading="lazy" decoding="async"/>
+      ${newBadge}
       <span class="product-card__badge status-badge status-badge--${p.status}">${status.emoji} ${escapeHtml(status.label)}</span>
     </div>
     <div class="product-card__body">
       ${brandLine}
       <h3 class="product-card__title">${escapeHtml(p.name)}</h3>
-      <p class="product-card__desc">Размер ${escapeHtml(p.size)}${p.condition ? ' · ' + escapeHtml(p.condition) : ''}</p>
+      <p class="product-card__desc">Размер ${escapeHtml(p.size)}${condition.label ? ' · ' + condition.emoji + ' ' + escapeHtml(condition.label) : ''}</p>
       <div class="product-card__footer">
         <span class="product-card__price">${formatPrice(p.price)}</span>
         <span class="btn btn--sm">Подробнее</span>

@@ -219,7 +219,7 @@ img { max-width: 100%; display: block; }
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
-.product-card__badge--new { background: #c8a96e; color: #0a0a0a; }
+.product-card__badge--new { background: #c8a96e; color: #0a0a0a; left: auto; right: 16px; }
 .product-card__dots {
   position: absolute; bottom: 12px; left: 0; right: 0;
   display: flex; justify-content: center; gap: 6px;
@@ -460,7 +460,8 @@ img { max-width: 100%; display: block; }
 .gallery__thumb.active { border-color: #c8a96e; }
 
 .product-detail__brand { font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase; color: #c8a96e; margin-bottom: 8px; }
-.product-detail__title { font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; font-weight: 600; margin-bottom: 12px; }
+.product-detail__title { font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; font-weight: 600; margin-bottom: 4px; }
+.product-detail__sku { font-size: 0.75rem; opacity: 0.4; letter-spacing: 0.05em; margin-bottom: 12px; }
 .product-detail__price { font-family: 'Cormorant Garamond', serif; font-size: 1.8rem; color: #c8a96e; font-weight: 700; margin-bottom: 16px; }
 .product-detail__specs { margin: 24px 0; display: flex; flex-direction: column; gap: 10px; }
 .product-detail__specs div { display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 8px; font-size: 0.88rem; }
@@ -476,6 +477,20 @@ img { max-width: 100%; display: block; }
 .measurements-table td:first-child { opacity: 0.5; }
 .measurements-note { font-size: 0.75rem; opacity: 0.4; }
 
+.product-detail__defect {
+  margin: 20px 0; padding: 16px 18px;
+  background: rgba(224,180,0,0.06); border: 1px solid rgba(224,180,0,0.25);
+}
+.product-detail__defect-title { color: #e0b400; font-weight: 600; font-size: 0.85rem; margin-bottom: 6px; }
+.product-detail__defect p:last-child { font-size: 0.88rem; opacity: 0.8; }
+
+.related-products { padding: 20px 0 100px; }
+
+/* Кнопка «Забронировать», зафиксированная снизу — только на мобильном
+   (см. .product-detail--sticky ниже), чтобы не занимать место на десктопе,
+   где основной CTA и так всегда виден в первом экране. */
+.sticky-cta { display: none; }
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 1024px) {
   .product-detail__grid { grid-template-columns: 1fr; gap: 32px; }
@@ -489,6 +504,15 @@ img { max-width: 100%; display: block; }
   .footer__inner { grid-template-columns: 1fr; }
   .modal { padding: 32px 24px; }
   .product-detail__sold .product-detail__cta-row { flex-direction: column; }
+  .product-detail--sticky { padding-bottom: 24px; }
+  .product-detail--sticky .sticky-cta {
+    display: block;
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    background: rgba(10,10,10,0.92); backdrop-filter: blur(8px);
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+  .product-detail--sticky .sticky-cta .btn { width: 100%; }
 }
 @media (max-width: 480px) {
   .filter-form__row--grid { grid-template-columns: 1fr; }

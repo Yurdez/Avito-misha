@@ -2,7 +2,7 @@
 // отдельно обновлять файл при добавлении товара не нужно.
 
 import { getProducts } from './_lib/store.js';
-import { SITE_URL } from './_lib/render.js';
+import { SITE_URL, CATEGORY_SLUGS } from './_lib/render.js';
 
 function urlEntry(path, lastmod) {
   return `<url><loc>${SITE_URL}${path}</loc>${lastmod ? `<lastmod>${lastmod.slice(0, 10)}</lastmod>` : ''}</url>`;
@@ -11,7 +11,13 @@ function urlEntry(path, lastmod) {
 export default async function handler(req, res) {
   const products = await getProducts();
 
-  const staticUrls = [urlEntry('/'), urlEntry('/catalog'), urlEntry('/contacts.html')];
+  const staticUrls = [
+    urlEntry('/'),
+    urlEntry('/catalog'),
+    urlEntry('/contacts.html'),
+    urlEntry('/privacy.html'),
+    ...Object.values(CATEGORY_SLUGS).map((slug) => urlEntry(`/catalog/${slug}`)),
+  ];
   const productUrls = products.map((p) => urlEntry(`/catalog/${p.slug}`, p.updatedAt || p.createdAt));
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>

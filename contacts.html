@@ -52,6 +52,10 @@
         <div class="form-group"><label>Ваше имя *</label><input type="text" name="name" placeholder="Иван Иванов" required/></div>
         <div class="form-group"><label>Телефон или Telegram</label><input type="text" name="contact" placeholder="+7 999 000-00-00 или @username"/></div>
         <div class="form-group"><label>Сообщение *</label><textarea name="message" placeholder="Ваш вопрос или пожелание..." style="height:120px;" required></textarea></div>
+        <div class="form-group" style="display:flex;align-items:flex-start;gap:10px;">
+          <input type="checkbox" name="consent" id="consent" required style="width:auto;margin-top:4px;"/>
+          <label for="consent" style="font-size:0.8rem;opacity:0.6;font-weight:400;">Согласен(-на) на обработку персональных данных согласно <a href="/privacy.html" target="_blank" style="color:#c8a96e;">политике конфиденциальности</a> *</label>
+        </div>
         <button type="submit" class="btn btn--full">Отправить</button>
       </form>
       <div id="contactSuccess" style="display:none;text-align:center;padding:48px;">
@@ -94,7 +98,11 @@ async function sendContact(e) {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: data.name, contact: data.contact, message: data.message })
     });
-    if (res.ok) { form.style.display = 'none'; document.getElementById('contactSuccess').style.display = ''; }
+    if (res.ok) {
+      form.style.display = 'none';
+      document.getElementById('contactSuccess').style.display = '';
+      if (window.track) window.track('submit_contact', {});
+    }
     else { alert('Ошибка. Напишите напрямую в Telegram.'); }
   } catch(err) { alert('Ошибка соединения.'); }
 }

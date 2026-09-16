@@ -1,6 +1,15 @@
 {
   "rewrites": [
     { "source": "/catalog", "destination": "/api/catalog-page" },
+    { "source": "/catalog/jackets", "destination": "/api/catalog-page?category=jacket" },
+    { "source": "/catalog/jeans", "destination": "/api/catalog-page?category=jeans" },
+    { "source": "/catalog/pants", "destination": "/api/catalog-page?category=pants" },
+    { "source": "/catalog/tshirts", "destination": "/api/catalog-page?category=tshirt" },
+    { "source": "/catalog/hoodies", "destination": "/api/catalog-page?category=hoodie" },
+    { "source": "/catalog/sweatshirts", "destination": "/api/catalog-page?category=sweatshirt" },
+    { "source": "/catalog/shoes", "destination": "/api/catalog-page?category=shoes" },
+    { "source": "/catalog/dresses", "destination": "/api/catalog-page?category=dress" },
+    { "source": "/catalog/accessories", "destination": "/api/catalog-page?category=accessories" },
     { "source": "/catalog/:slug", "destination": "/api/product-page?slug=:slug" },
     { "source": "/sitemap.xml", "destination": "/api/sitemap" }
   ]

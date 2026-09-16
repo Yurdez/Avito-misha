@@ -1,11 +1,11 @@
 // SSR-страница товара: /catalog/:slug — уникальный индексируемый URL с
 // Product JSON-LD, галереей и Telegram/Avito CTA.
 
-import { getProductBySlug } from './_lib/store.js';
+import { getProductBySlug, getRelatedProducts } from './_lib/store.js';
 import {
-  pageShell, breadcrumbsHtml, breadcrumbsJsonLd, productJsonLd,
-  statusBadgeHtml, telegramLink, bookingMessage, questionMessage,
-  escapeHtml, escapeAttr, formatPrice, isHttpsUrl, CATEGORIES, SITE_URL,
+  pageShell, breadcrumbsHtml, breadcrumbsJsonLd, productJsonLd, productCardHtml,
+  statusBadgeHtml, telegramLink, bookingMessage, questionMessage, resolveCondition,
+  escapeHtml, escapeAttr, formatPrice, isHttpsUrl, CATEGORIES, CATEGORY_SLUGS, SITE_URL,
 } from './_lib/render.js';
 
 function notFoundPage(res) {
@@ -68,14 +68,17 @@ export default async function handler(req, res) {
   const url = `${SITE_URL}/catalog/${p.slug}`;
   const fullName = (p.brand ? p.brand + ' ' : '') + p.name;
   const categoryLabel = CATEGORIES[p.category] || '';
+  const categoryHref = CATEGORY_SLUGS[p.category] ? `/catalog/${CATEGORY_SLUGS[p.category]}` : `/catalog?category=${p.category}`;
   const breadcrumbItems = [
     { label: 'Главная', href: '/' },
     { label: 'Каталог', href: '/catalog' },
-    ...(categoryLabel ? [{ label: categoryLabel, href: `/catalog?category=${p.category}` }] : []),
+    ...(categoryLabel ? [{ label: categoryLabel, href: categoryHref }] : []),
     { label: fullName },
   ];
 
   const isSold = p.status === 'sold';
+  const condition = resolveCondition(p.condition);
+  const related = await getRelatedProducts(p, 4);
 
   const ctaHtml = isSold
     ? `<div class="product-detail__sold">
@@ -86,13 +89,26 @@ export default async function handler(req, res) {
          </div>
        </div>`
     : `<div class="product-detail__cta-row">
-         <a href="${telegramLink(bookingMessage(p))}" target="_blank" rel="noopener" class="btn btn--full" data-track="click_telegram" data-track-params='{"place":"product_book"}'>Забронировать в Telegram</a>
+         <a href="${telegramLink(bookingMessage(p))}" target="_blank" rel="noopener" class="btn btn--full" data-track="click_telegram,click_buy" data-track-params='{"place":"product_book","id":"${p.id}"}'>Забронировать в Telegram</a>
          <a href="${telegramLink(questionMessage(p))}" target="_blank" rel="noopener" class="btn btn--outline btn--full" data-track="click_telegram" data-track-params='{"place":"product_question"}'>Задать вопрос</a>
          ${p.avitoUrl ? `<a href="${escapeAttr(p.avitoUrl)}" target="_blank" rel="noopener" class="btn btn--outline btn--full" data-track="click_avito">Открыть объявление на Авито</a>` : ''}
        </div>`;
 
+  const defectHtml = p.defect
+    ? `<div class="product-detail__defect"><p class="product-detail__defect-title">⚠ Дефект</p><p>${escapeHtml(p.defect)}</p></div>`
+    : '';
+
+  const relatedHtml = related.length
+    ? `<section class="related-products">
+         <div class="container">
+           <h2 class="section-title">Вам может понравиться</h2>
+           <div class="products">${related.map(productCardHtml).join('')}</div>
+         </div>
+       </section>`
+    : '';
+
   const bodyHtml = `
-<section class="product-detail">
+<section class="product-detail${isSold ? '' : ' product-detail--sticky'}">
   <div class="container">
     ${breadcrumbsHtml(breadcrumbItems)}
     <div class="product-detail__grid">
@@ -100,6 +116,7 @@ export default async function handler(req, res) {
       <div class="product-detail__info">
         ${p.brand ? `<p class="product-detail__brand">${escapeHtml(p.brand)}</p>` : ''}
         <h1 class="product-detail__title">${escapeHtml(p.name)}</h1>
+        <p class="product-detail__sku">Артикул ${escapeHtml(p.sku)}</p>
         <p class="product-detail__price">${formatPrice(p.price)}</p>
         ${statusBadgeHtml(p.status)}
 
@@ -107,22 +124,27 @@ export default async function handler(req, res) {
           <div><dt>Размер</dt><dd>${escapeHtml(p.size)}</dd></div>
           ${p.color ? `<div><dt>Цвет</dt><dd>${escapeHtml(p.color)}</dd></div>` : ''}
           ${p.material ? `<div><dt>Материал</dt><dd>${escapeHtml(p.material)}</dd></div>` : ''}
-          <div><dt>Состояние</dt><dd>${escapeHtml(p.condition)}</dd></div>
+          <div><dt>Состояние</dt><dd>${condition.emoji} ${escapeHtml(condition.label)}</dd></div>
         </dl>
 
+        ${defectHtml}
         ${p.description ? `<p class="product-detail__desc">${escapeHtml(p.description)}</p>` : ''}
         ${measurementsHtml(p.measurements)}
         ${ctaHtml}
       </div>
     </div>
   </div>
-</section>`;
+</section>
+${relatedHtml}
+${isSold ? '' : `<div class="sticky-cta">
+  <a href="${telegramLink(bookingMessage(p))}" target="_blank" rel="noopener" class="btn btn--full" data-track="click_telegram,click_buy" data-track-params='{"place":"sticky_cta","id":"${p.id}"}'>Забронировать</a>
+</div>`}`;
 
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Cache-Control', 's-maxage=30, stale-while-revalidate=300');
   res.status(200).send(pageShell({
     title: `${fullName} — купить б/у | AVEREST`,
-    description: `${fullName}, размер ${p.size}, ${p.condition?.toLowerCase() || ''} состояние, ${formatPrice(p.price)}. ${categoryLabel} с доставкой по России.`,
+    description: `${fullName}, размер ${p.size}, состояние: ${condition.label.toLowerCase()}, ${formatPrice(p.price)}. ${categoryLabel} с доставкой по России.`,
     canonical: `/catalog/${p.slug}`,
     ogImage: (p.photos || []).find(isHttpsUrl),
     bodyHtml,

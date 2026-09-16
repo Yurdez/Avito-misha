@@ -4,7 +4,7 @@
 import { getProducts } from './_lib/store.js';
 import {
   pageShell, productCardHtml, breadcrumbsHtml, breadcrumbsJsonLd,
-  escapeHtml, escapeAttr, CATEGORIES, SITE_URL,
+  escapeHtml, escapeAttr, CATEGORIES, CATEGORY_SLUGS, SITE_URL,
 } from './_lib/render.js';
 
 function unique(arr) {
@@ -56,7 +56,11 @@ export default async function handler(req, res) {
     ? `${categoryLabel} б/у от AVEREST: реальные фото, честное состояние, доставка по России.`
     : 'Каталог брендовых вещей из секонд-хенда: куртки, джинсы, обувь и аксессуары. Реальные фото, честное состояние, доставка по России.';
 
-  const breadcrumbItems = [{ label: 'Главная', href: '/' }, { label: categoryLabel || 'Каталог' }];
+  const categoryHref = category && CATEGORY_SLUGS[category] ? `/catalog/${CATEGORY_SLUGS[category]}` : '/catalog';
+  const canonical = categoryLabel ? categoryHref : '/catalog';
+  const breadcrumbItems = category
+    ? [{ label: 'Главная', href: '/' }, { label: 'Каталог', href: '/catalog' }, { label: categoryLabel || 'Каталог' }]
+    : [{ label: 'Главная', href: '/' }, { label: 'Каталог' }];
 
   const categoryOptions = ['<option value="">Все категории</option>']
     .concat(availableCategories.map((c) =>
@@ -102,7 +106,7 @@ export default async function handler(req, res) {
         <div class="filter-form__row filter-form__row--grid">
           <input type="number" name="minPrice" placeholder="Цена от" value="${escapeAttr(minPrice || '')}" min="0"/>
           <input type="number" name="maxPrice" placeholder="Цена до" value="${escapeAttr(maxPrice || '')}" min="0"/>
-          <button type="submit" class="btn btn--sm">Применить</button>
+          <button type="submit" class="btn btn--sm" data-track="filter_catalog">Применить</button>
           ${hasFilters ? '<a href="/catalog" class="btn btn--outline btn--sm">Сбросить</a>' : ''}
         </div>
       </form>
@@ -117,7 +121,7 @@ export default async function handler(req, res) {
   res.status(200).send(pageShell({
     title,
     description,
-    canonical: '/catalog',
+    canonical,
     bodyHtml,
     activeNav: 'catalog',
     jsonLd: [
@@ -130,6 +134,12 @@ export default async function handler(req, res) {
         })),
       },
     ],
-    extraScripts: `<script>document.querySelectorAll('.filter-form select').forEach(function(s){s.addEventListener('change',function(){s.form.submit();});});</script>`,
+    extraScripts: `<script>
+document.querySelectorAll('.filter-form select').forEach(function(s){s.addEventListener('change',function(){s.form.submit();});});
+if (window.track) {
+  ${category ? `window.track('view_category', { category: ${JSON.stringify(category).replace(/</g, '\\u003c')} });` : ''}
+  ${search ? `window.track('search_product', { q: ${JSON.stringify(search).replace(/</g, '\\u003c')} });` : ''}
+}
+</script>`,
   }));
 }

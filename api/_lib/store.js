@@ -9,7 +9,12 @@ import getRedis from './redis.js';
 import { slugify } from './render.js';
 
 const PRODUCTS_KEY = 'products';
+const SKU_COUNTER_KEY = 'sku_counter';
 const DRAFT_TTL_SECONDS = 60 * 60; // черновик анкеты живёт час без активности
+
+function formatSku(n) {
+  return 'AV-' + String(n).padStart(3, '0');
+}
 
 // Товары, сохранённые до появления полей brand/status/slug/material/avitoUrl,
 // не переписываются в Redis — дефолты применяются при каждом чтении, чтобы
@@ -20,10 +25,14 @@ function normalizeProduct(p) {
     material: '',
     avitoUrl: '',
     measurements: null,
+    defect: '',
     status: 'available',
     updatedAt: p.createdAt,
     ...p,
     slug: p.slug || slugify(`${p.brand || ''} ${p.name}`, String(p.id).slice(0, 8)),
+    // Старые товары без sku показывают короткий ID вместо артикула — не
+    // выдаём задним числом номера, которые нарушили бы хронологию счётчика.
+    sku: p.sku || 'AV-' + String(p.id).slice(0, 3).toUpperCase(),
   };
 }
 
@@ -40,9 +49,33 @@ export async function getProductBySlug(slug) {
 
 export async function addProduct(product) {
   const redis = await getRedis();
-  const withSlug = { ...product, slug: slugify(`${product.brand || ''} ${product.name}`, String(product.id).slice(0, 8)) };
+  const seq = await redis.incr(SKU_COUNTER_KEY);
+  const withSlug = {
+    ...product,
+    sku: formatSku(seq),
+    slug: slugify(`${product.brand || ''} ${product.name}`, String(product.id).slice(0, 8)),
+  };
   await redis.lPush(PRODUCTS_KEY, JSON.stringify(withSlug));
   return withSlug;
+}
+
+// Похожие товары для страницы товара: сперва та же категория, при нехватке
+// добавляем тот же бренд — оба списка исключают текущий товар и всё проданное,
+// чтобы не вести на тупиковую страницу.
+export async function getRelatedProducts(product, limit = 4) {
+  const all = await getProducts();
+  const pool = all.filter((p) => p.id !== product.id && p.status !== 'sold');
+
+  const sameCategory = pool.filter((p) => p.category === product.category);
+  const result = sameCategory.slice(0, limit);
+
+  if (result.length < limit && product.brand) {
+    const usedIds = new Set(result.map((p) => p.id));
+    const sameBrand = pool.filter((p) => p.brand === product.brand && !usedIds.has(p.id));
+    result.push(...sameBrand.slice(0, limit - result.length));
+  }
+
+  return result;
 }
 
 // Список — не хэш, поэтому обновление статуса одной вещи требует найти её

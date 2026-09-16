@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Политика конфиденциальности — AVEREST</title>
+  <meta name="description" content="Какие данные собирает AVEREST через форму на сайте и куда они попадают."/>
+  <link rel="canonical" href="https://avito-misha.vercel.app/privacy.html"/>
+  <meta name="robots" content="noindex, follow"/>
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<header class="header">
+  <div class="container header__inner">
+    <a href="index.html" class="logo">AVER<span>EST</span></a>
+    <nav class="nav">
+      <a href="index.html" class="nav__link">Главная</a>
+      <a href="/catalog" class="nav__link">Каталог</a>
+      <a href="contacts.html" class="nav__link">Контакты</a>
+    </nav>
+    <a href="https://t.me/brendyshmendy_bot" target="_blank" rel="noopener" class="btn btn--sm" data-track="click_telegram" data-track-params='{"place":"header"}'>Telegram</a>
+  </div>
+</header>
+
+<section class="contacts-section">
+  <div class="container" style="max-width:720px;">
+    <h2 class="section-title" style="text-align:left;">Политика конфиденциальности</h2>
+
+    <div style="opacity:0.75;font-size:0.92rem;line-height:1.8;">
+      <p style="margin-bottom:20px;">Эта страница описывает, какие данные собирает форма «Написать нам» на сайте AVEREST
+        (<a href="/contacts.html" style="color:#c8a96e;">/contacts.html</a>) и что с ними происходит дальше — без
+        юридических формулировок, только фактически.</p>
+
+      <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;margin:28px 0 10px;">Какие данные собираются</h3>
+      <p style="margin-bottom:20px;">Имя, контакт для связи (телефон или Telegram-username, по желанию) и текст
+        сообщения — только то, что вы сами вписываете в форму. Сайт не запрашивает паспортные данные, адрес или
+        платёжные реквизиты через форму.</p>
+
+      <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;margin:28px 0 10px;">Куда попадают данные</h3>
+      <p style="margin-bottom:20px;">Сообщение из формы уходит напрямую в Telegram-чат владельца AVEREST через
+        Telegram Bot API. Отдельной базы данных с контактами посетителей сайт не ведёт — сообщение просто
+        пересылается, как обычное сообщение в чат.</p>
+
+      <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;margin:28px 0 10px;">Что происходит при бронировании товара</h3>
+      <p style="margin-bottom:20px;">Кнопки «Забронировать»/«Задать вопрос» на странице товара открывают Telegram с
+        предзаполненным сообщением — переписка дальше идёт напрямую в Telegram, по правилам самого Telegram, сайт
+        в ней не участвует.</p>
+
+      <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;margin:28px 0 10px;">Соединение</h3>
+      <p style="margin-bottom:20px;">Сайт работает по HTTPS (шифрованное соединение).</p>
+
+      <p style="margin-top:36px;padding:16px 20px;background:#141414;border:1px solid rgba(255,255,255,0.08);font-size:0.82rem;opacity:0.6;">
+        ⚠ Это фактическое, не юридическое описание. Перед публикацией финальной версии документ должен
+        проверить юрист — здесь не утверждается соответствие 152-ФЗ или иным нормам, а просто честно
+        перечислено, что происходит с данными технически.
+      </p>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container footer__inner">
+    <div class="footer__brand">
+      <a href="index.html" class="logo">AVER<span>EST</span></a>
+      <p>Брендовый секонд-хенд с доставкой по России</p>
+    </div>
+    <div class="footer__links">
+      <a href="index.html">Главная</a>
+      <a href="/catalog">Каталог</a>
+      <a href="contacts.html">Контакты</a>
+    </div>
+    <div class="footer__contacts">
+      <a href="https://t.me/brendyshmendy_bot" target="_blank" rel="noopener" data-track="click_telegram" data-track-params='{"place":"footer"}'>Telegram</a>
+      <a href="https://www.avito.ru/" target="_blank" rel="noopener">Авито</a>
+    </div>
+  </div>
+  <div class="footer__bottom">
+    <div class="container"><p>© 2025 AVEREST. Все права защищены.</p></div>
+  </div>
+</footer>
+<script src="app.js"></script>
+</body>
+</html>

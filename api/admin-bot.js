@@ -7,7 +7,7 @@ import {
   addProduct, getProducts, setProductStatus, uploadPhoto,
 } from './_lib/store.js';
 import { sendMessage, sendPhoto, answerCallbackQuery, editMessageReplyMarkup, downloadFile, escapeHtml } from './_lib/telegram.js';
-import { CATEGORIES, STATUS, isHttpsUrl, formatPrice as formatPriceRub } from './_lib/render.js';
+import { CATEGORIES, STATUS, CONDITION, MEASUREMENT_FIELDS, isHttpsUrl, formatPrice as formatPriceRub } from './_lib/render.js';
 
 const MAX_PHOTOS = 5;
 const MAX_NAME_LENGTH = 200;
@@ -31,11 +31,19 @@ const statusKeyboard = (id) => ({
 });
 
 const conditionKeyboard = {
-  inline_keyboard: [[
-    { text: 'Хорошее', callback_data: 'cond:Хорошее' },
-    { text: 'Отличное', callback_data: 'cond:Отличное' },
-  ]],
+  inline_keyboard: Object.entries(CONDITION).map(([key, c]) => [
+    { text: `${c.emoji} ${c.label}`, callback_data: `cond:${key}` },
+  ]),
 };
+
+// Замер — либо число см, либо «-» (пропустить это поле).
+function parseMeasurement(text) {
+  const trimmed = text.trim();
+  if (trimmed === '-') return '';
+  const cleaned = trimmed.replace(',', '.');
+  if (!/^\d+(\.\d+)?$/.test(cleaned)) return null;
+  return cleaned;
+}
 
 const photosKeyboard = {
   inline_keyboard: [[{ text: '✅ Готово', callback_data: 'photos_done' }]],
@@ -81,6 +89,13 @@ async function askNext(chatId, draft) {
       return sendMessage(chatId, 'Материал (например: хлопок, деним) — или «-», если не важно:');
     case 'condition':
       return sendMessage(chatId, 'Состояние:', { reply_markup: conditionKeyboard });
+    case 'measurements': {
+      const fields = MEASUREMENT_FIELDS[draft.category] || [];
+      const field = fields[draft.measurementIndex || 0];
+      return sendMessage(chatId, `Замер «${field}», см (или «-», если не мерили):`);
+    }
+    case 'defect':
+      return sendMessage(chatId, 'Есть дефект (потёртость, пятно и т.п.)? Опиши коротко или пришли «-», если дефектов нет:');
     case 'avitoUrl':
       return sendMessage(chatId, 'Ссылка на объявление на Авито — или «-», если пока нет:');
     case 'description':
@@ -92,14 +107,23 @@ async function askNext(chatId, draft) {
   }
 }
 
+function measurementsSummary(measurements) {
+  const entries = Object.entries(measurements || {}).filter(([, v]) => v);
+  if (!entries.length) return '';
+  return 'Замеры: ' + entries.map(([k, v]) => `${k} ${v}см`).join(', ') + '\n';
+}
+
 async function sendConfirmation(chatId, draft, photos) {
+  const condition = CONDITION[draft.condition];
   const caption =
     `<b>${draft.brand ? escapeHtml(draft.brand) + ' ' : ''}${escapeHtml(draft.name)}</b>\n` +
     `Категория: ${escapeHtml(CATEGORIES[draft.category])}\n` +
     `Размер: ${escapeHtml(draft.size)}\n` +
     `Цвет: ${escapeHtml(draft.color)}\n` +
     (draft.material ? `Материал: ${escapeHtml(draft.material)}\n` : '') +
-    `Состояние: ${escapeHtml(draft.condition)}\n` +
+    `Состояние: ${condition ? condition.emoji + ' ' + escapeHtml(condition.label) : escapeHtml(draft.condition)}\n` +
+    measurementsSummary(draft.measurements) +
+    (draft.defect ? `⚠ Дефект: ${escapeHtml(draft.defect)}\n` : '') +
     `Цена: ${formatPriceRub(draft.price)}\n` +
     (draft.avitoUrl ? `Авито: ${escapeHtml(draft.avitoUrl)}\n` : '') +
     (draft.description && draft.description !== '-' ? `\n${escapeHtml(draft.description)}\n` : '\n') +
@@ -148,6 +172,30 @@ async function handleText(chatId, draft, text) {
     case 'material':
       draft.material = trimmed === '-' ? '' : trimmed.slice(0, 100);
       draft.step = 'condition';
+      break;
+    case 'measurements': {
+      const fields = MEASUREMENT_FIELDS[draft.category] || [];
+      const idx = draft.measurementIndex || 0;
+      const fieldName = fields[idx];
+      const value = parseMeasurement(trimmed);
+      if (value === null) {
+        await sendMessage(chatId, 'Не понял число. Пришли см (например 68) или «-», если не мерили.');
+        return;
+      }
+      draft.measurements = draft.measurements || {};
+      if (value) draft.measurements[fieldName] = value;
+      const nextIdx = idx + 1;
+      if (nextIdx < fields.length) {
+        draft.measurementIndex = nextIdx;
+      } else {
+        draft.step = 'defect';
+        delete draft.measurementIndex;
+      }
+      break;
+    }
+    case 'defect':
+      draft.defect = trimmed === '-' ? '' : trimmed.slice(0, MAX_DESCRIPTION_LENGTH);
+      draft.step = 'avitoUrl';
       break;
     case 'avitoUrl':
       if (trimmed !== '-' && !isHttpsUrl(trimmed)) {
@@ -224,7 +272,7 @@ async function listItemsForStatus(chatId) {
 
   for (const p of recent) {
     const caption =
-      `${STATUS[p.status]?.emoji || '🟢'} <b>${p.brand ? escapeHtml(p.brand) + ' ' : ''}${escapeHtml(p.name)}</b>\n` +
+      `${STATUS[p.status]?.emoji || '🟢'} <b>${p.brand ? escapeHtml(p.brand) + ' ' : ''}${escapeHtml(p.name)}</b> (${escapeHtml(p.sku)})\n` +
       `Размер ${escapeHtml(p.size)} · ${formatPriceRub(p.price)}\n` +
       `Статус: ${escapeHtml(STATUS[p.status]?.label || 'В наличии')}`;
 
@@ -260,10 +308,17 @@ async function handleCallback(chatId, draft, data, callbackId, messageId) {
 
   if (data.startsWith('cond:')) {
     if (draft.step !== 'condition') { await answerCallbackQuery(callbackId, 'Уже выбрано'); return; }
-    draft.condition = data.slice(5);
-    draft.step = 'avitoUrl';
+    const key = data.slice(5);
+    draft.condition = key;
+    const fields = MEASUREMENT_FIELDS[draft.category] || [];
+    if (fields.length) {
+      draft.step = 'measurements';
+      draft.measurementIndex = 0;
+    } else {
+      draft.step = 'defect';
+    }
     await saveDraft(chatId, draft);
-    await answerCallbackQuery(callbackId, draft.condition);
+    await answerCallbackQuery(callbackId, CONDITION[key]?.label || key);
     await askNext(chatId, draft);
     return;
   }
@@ -296,6 +351,8 @@ async function handleCallback(chatId, draft, data, callbackId, messageId) {
       color: draft.color,
       material: draft.material || '',
       condition: draft.condition,
+      measurements: draft.measurements || null,
+      defect: draft.defect || '',
       avitoUrl: draft.avitoUrl || '',
       description: draft.description === '-' ? '' : draft.description,
       status: 'available',
@@ -307,7 +364,7 @@ async function handleCallback(chatId, draft, data, callbackId, messageId) {
     await clearDraft(chatId);
     await answerCallbackQuery(callbackId, 'Опубликовано!');
     await clearButtons(chatId, messageId);
-    await sendMessage(chatId, `✅ «${escapeHtml(product.name)}» опубликовано на сайте:\nhttps://avito-misha.vercel.app/catalog/${published.slug}`);
+    await sendMessage(chatId, `✅ «${escapeHtml(product.name)}» (${escapeHtml(published.sku)}) опубликовано на сайте:\nhttps://avito-misha.vercel.app/catalog/${published.slug}`);
     return;
   }
 
